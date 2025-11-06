@@ -1,4 +1,4 @@
-// lib/data/bd_data.dart
+
 class BDInfo {
   // ৮টি বিভাগ
   static const List<String> divisions = [
@@ -10,7 +10,7 @@ class BDInfo {
   static List<String> getDistrictsByDivision(String division) {
     final Map<String, List<String>> data = {
       "ঢাকা": ["ঢাকা", "গাজীপুর", "নারায়ণগঞ্জ", "টাঙ্গাইল", "কিশোরগঞ্জ"],
-      "চট্টগ্রাম": ["চট্টগ্রাম", "কক্সবাজার", "রাঙামাটি", "বান্দরবান"],
+      "চট্টগ্রাম": ["চট্টগ্রাম", "কক্সবাজার", "রাঙামাটি", "বান্দরবান"],  //'Lakshmipur','Feni',"Chadpur","Nowakhali"
       "রাজশাহী": ["রাজশাহী", "বগুড়া", "পাবনা", "নাটোর"],
       "খুলনা": ["খুলনা", "যশোর", "সাতক্ষীরা", "বাগেরহাট"],
       "বরিশাল": ["বরিশাল", "পটুয়াখালী", "ভোলা"],

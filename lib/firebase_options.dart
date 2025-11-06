@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -66,6 +63,17 @@ class DefaultFirebaseOptions {
     databaseURL: 'https://football-firebase-3e1e0-default-rtdb.firebaseio.com',
     storageBucket: 'football-firebase-3e1e0.firebasestorage.app',
     iosBundleId: 'com.example.footballFirebase',
+  );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyCVJmgaZl0CN8-gYrNeb8sxxaaklRCdJhw',
+    appId: '1:27734595837:web:3fb9215856a4435099c694',
+    messagingSenderId: '27734595837',
+    projectId: 'football-firebase-3e1e0',
+    authDomain: 'football-firebase-3e1e0.firebaseapp.com',
+    databaseURL: 'https://football-firebase-3e1e0-default-rtdb.firebaseio.com',
+    storageBucket: 'football-firebase-3e1e0.firebasestorage.app',
+    measurementId: 'G-B55WZ6MM7Q',
   );
 
 }
