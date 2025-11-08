@@ -2,45 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/player_provider.dart';
+import '../widgets/my_profile_card.dart';
 import 'edit_profile_screen.dart';
-import 'my_player_profile_screen.dart';
 
-class MyProfileScreen extends StatefulWidget {
+class MyProfileScreen extends StatelessWidget {
   const MyProfileScreen({Key? key}) : super(key: key);
-
-  @override
-  State<MyProfileScreen> createState() => _MyProfileScreenState();
-}
-
-class _MyProfileScreenState extends State<MyProfileScreen> {
-  bool _isCheckingPlayer = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPlayerData();
-  }
-
-  Future<void> _loadPlayerData() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
-
-    if (authProvider.currentUser != null) {
-      await playerProvider.checkPlayerProfile(authProvider.currentUser!.uid);
-    }
-
-    if (mounted) {
-      setState(() => _isCheckingPlayer = false);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A2E),
-      body: Consumer2<AuthProvider, PlayerProvider>(
-        builder: (context, authProvider, playerProvider, child) {
+      body: Consumer<AuthProvider>(
+        builder: (context, authProvider, child) {
           final user = authProvider.currentUser;
 
           if (user == null) {
@@ -54,156 +27,126 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
 
           return CustomScrollView(
             slivers: [
-              /// ✅ TOP PROFILE AREA
+              // App Bar with Profile
               SliverAppBar(
-                expandedHeight: 260,
+                expandedHeight: 220,
+                floating: false,
                 pinned: true,
                 backgroundColor: const Color(0xFF16213E),
+                iconTheme: const IconThemeData(color: Colors.white),
                 actions: [
                   IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.white),
+                    icon: const Icon(Icons.edit),
                     onPressed: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const EditProfileScreen(),
+                          builder: (context) => const EditProfileScreen(),
                         ),
                       );
                     },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.logout, color: Colors.white),
-                    onPressed: () => _showLogoutDialog(context, authProvider),
+                    tooltip: 'প্রোফাইল সম্পাদনা',
                   ),
                 ],
                 flexibleSpace: FlexibleSpaceBar(
-                  background: Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF0F3460), Color(0xFF16213E)],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 60),
-                        CircleAvatar(
-                          radius: 55,
-                          backgroundColor: Colors.white,
-                          child: CircleAvatar(
-                            radius: 50,
-                            backgroundColor: const Color(0xFF1A5490),
-                            child: Text(
-                              user.fullName.isNotEmpty
-                                  ? user.fullName[0].toUpperCase()
-                                  : "U",
-                              style: const TextStyle(
-                                fontSize: 48,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          user.fullName,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          user.email,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
-                        )
-                      ],
-                    ),
+                  // 🚨 এখানে নতুন MyProfileCard ব্যবহার করা হচ্ছে 🚨
+                  background: MyProfileCard(
+                    fullName: user.fullName,
+                    profilePhotoUrl: user.profilePhotoUrl, email:user.email,
                   ),
                 ),
               ),
 
-              /// ✅ CONTENT
+              // Profile Information
               SliverToBoxAdapter(
                 child: Padding(
+                  // ... (বাকি কোড অপরিবর্তিত)
                   padding: const EdgeInsets.all(20),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      /// ✅ Player Profile Section
-                      _isCheckingPlayer
-                          ? _buildLoadingCard()
-                          : playerProvider.hasPlayer
-                          ? _buildPlayerProfileButton(context)
-                          : _buildCreatePlayerButton(
-                          context, authProvider, playerProvider),
-
-                      const SizedBox(height: 20),
-
-                      /// ✅ PERSONAL INFO CARD
+                      // Personal Information Card
                       _buildInfoCard(
-                        title: "ব্যক্তিগত তথ্য",
+                        title: 'ব্যক্তিগত তথ্য',
                         icon: Icons.person,
                         children: [
-                          _buildInfoRow("পূর্ণ নাম", user.fullName,
-                              Icons.person_outline),
-                          _divider(),
-                          _buildInfoRow("ইমেইল", user.email,
-                              Icons.email_outlined),
-                          _divider(),
-                          _buildInfoRow("লিঙ্গ", user.gender, Icons.wc),
-                          _divider(),
                           _buildInfoRow(
-                              "জন্ম তারিখ",
-                              DateFormat('dd MMMM yyyy')
-                                  .format(user.dateOfBirth),
-                              Icons.cake),
+                            icon: Icons.person_outline,
+                            label: 'পূর্ণ নাম',
+                            value: user.fullName,
+                          ),
+                          const Divider(color: Colors.white24, height: 24),
+                          _buildInfoRow(
+                            icon: Icons.email_outlined,
+                            label: 'ইমেইল',
+                            value: user.email,
+                          ),
+                          const Divider(color: Colors.white24, height: 24),
+                          _buildInfoRow(
+                            icon: Icons.wc,
+                            label: 'লিঙ্গ',
+                            value: user.gender,
+                          ),
+                          const Divider(color: Colors.white24, height: 24),
+                          _buildInfoRow(
+                            icon: Icons.cake,
+                            label: 'জন্ম তারিখ',
+                            value: DateFormat('dd MMMM yyyy')
+                                .format(user.dateOfBirth),
+                          ),
                         ],
                       ),
 
                       const SizedBox(height: 20),
 
-                      /// ✅ ADDRESS
+                      // Location Information Card
                       _buildInfoCard(
-                        title: "ঠিকানা",
+                        title: 'ঠিকানা',
                         icon: Icons.location_on,
                         children: [
                           _buildInfoRow(
-                              "বিভাগ", user.division, Icons.location_city),
-                          _divider(),
-                          _buildInfoRow("জেলা", user.district, Icons.map),
-                          _divider(),
-                          _buildInfoRow("উপজেলা", user.upazila, Icons.place),
+                            icon: Icons.location_city,
+                            label: 'বিভাগ',
+                            value: user.division,
+                          ),
+                          const Divider(color: Colors.white24, height: 24),
+                          _buildInfoRow(
+                            icon: Icons.map,
+                            label: 'জেলা',
+                            value: user.district,
+                          ),
+                          const Divider(color: Colors.white24, height: 24),
+                          _buildInfoRow(
+                            icon: Icons.place,
+                            label: 'উপজেলা',
+                            value: user.upazila,
+                          ),
                         ],
                       ),
 
                       const SizedBox(height: 20),
 
-                      /// ✅ ACCOUNT
+                      // Account Information Card
                       _buildInfoCard(
-                        title: "অ্যাকাউন্ট তথ্য",
+                        title: 'অ্যাকাউন্ট তথ্য',
                         icon: Icons.info_outline,
                         children: [
                           _buildInfoRow(
-                            "যোগদানের তারিখ",
-                            DateFormat('dd MMMM yyyy').format(user.createdAt),
-                            Icons.calendar_today,
+                            icon: Icons.calendar_today,
+                            label: 'যোগদানের তারিখ',
+                            value: DateFormat('dd MMMM yyyy')
+                                .format(user.createdAt),
                           ),
-                          _divider(),
+                          const Divider(color: Colors.white24, height: 24),
                           _buildInfoRow(
-                            "ইউজার আইডি",
-                            "${user.uid.substring(0, 12)}...",
-                            Icons.fingerprint,
+                            icon: Icons.fingerprint,
+                            label: 'ইউজার আইডি',
+                            value: user.uid.substring(0, 12) + '...',
                           ),
                         ],
                       ),
 
-                      const SizedBox(height: 50),
+                      const SizedBox(height: 40),
                     ],
                   ),
                 ),
@@ -215,12 +158,8 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
     );
   }
 
-  // -------------------------------------------------------------
-  // ✅ UI COMPONENTS
-  // -------------------------------------------------------------
-
-  Widget _divider() =>
-      const Divider(color: Colors.white24, height: 22, thickness: 1);
+  // --- Utility Widgets and Dialogs ---
+  // _buildInfoCard, _buildInfoRow, এবং _showLogoutDialog মেথডগুলো অপরিবর্তিত থাকবে
 
   Widget _buildInfoCard({
     required String title,
@@ -228,49 +167,92 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
     required List<Widget> children,
   }) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF16213E), Color(0xFF0F3460)],
+          colors: [
+            Color(0xFF16213E),
+            Color(0xFF0F3460),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            Icon(icon, color: Colors.white),
-            const SizedBox(width: 10),
-            Text(title,
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                title,
                 style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold)),
-          ]),
-          const SizedBox(height: 16),
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
           ...children,
         ],
       ),
     );
   }
 
-  Widget _buildInfoRow(String label, String value, IconData icon) {
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
     return Row(
       children: [
-        Icon(icon, color: Colors.white54, size: 20),
+        Icon(
+          icon,
+          color: Colors.white54,
+          size: 20,
+        ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label,
-                  style: const TextStyle(color: Colors.white54, fontSize: 12)),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white54,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 4),
               Text(
                 value,
                 style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500),
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),
@@ -279,218 +261,37 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
     );
   }
 
-  // -------------------------------------------------------------
-  // ✅ PLAYER BUTTONS
-  // -------------------------------------------------------------
-
-  Widget _buildLoadingCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF16213E),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: const Center(
-        child: Column(
-          children: [
-            CircularProgressIndicator(color: Colors.white),
-            SizedBox(height: 10),
-            Text("প্রোফাইল যাচাই হচ্ছে...",
-                style: TextStyle(color: Colors.white70)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPlayerProfileButton(BuildContext context) {
-    return _playerButton(
-      title: "⚽ আমার প্লেয়ার প্রোফাইল",
-      subtitle: "আপনার ম্যাচ এবং স্ট্যাটস দেখুন",
-      color1: Color(0xFF0F3460),
-      color2: Color(0xFF1A5490),
-      iconColor: Colors.green,
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const MyPlayerProfileScreen()),
-      ),
-    );
-  }
-
-  Widget _buildCreatePlayerButton(
-      BuildContext context, AuthProvider auth, PlayerProvider player) {
-    return _playerButton(
-      title: "⚽ প্লেয়ার প্রোফাইল তৈরি করুন",
-      subtitle: "আপনার নিজস্ব প্লেয়ার আইডি পান",
-      color1: Color(0xFF28A745),
-      color2: Color(0xFF20C997),
-      iconColor: Colors.white,
-      onTap: () => _showCreatePlayerDialog(context, auth, player),
-    );
-  }
-
-  Widget _playerButton({
-    required String title,
-    required String subtitle,
-    required Color color1,
-    required Color color2,
-    required Color iconColor,
-    required Function() onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [color1, color2]),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 28,
-              backgroundColor: iconColor,
-              child:
-              const Icon(Icons.sports_soccer, color: Colors.white, size: 28),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style:
-                      const TextStyle(color: Colors.white, fontSize: 18)),
-                  Text(subtitle,
-                      style:
-                      const TextStyle(color: Colors.white70, fontSize: 13)),
-                ],
-              ),
-            ),
-            const Icon(Icons.arrow_forward_ios, color: Colors.white),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // -------------------------------------------------------------
-  // ✅ CREATE PLAYER DIALOG
-  // -------------------------------------------------------------
-
-  void _showCreatePlayerDialog(
-      BuildContext context,
-      AuthProvider auth,
-      PlayerProvider player,
-      ) {
-    String? selectedPosition;
-
+  void _showLogoutDialog(BuildContext context, AuthProvider authProvider) {
     showDialog(
       context: context,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              backgroundColor: const Color(0xFF16213E),
-              title: const Text("পজিশন নির্বাচন করুন",
-                  style: TextStyle(color: Colors.white)),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ...[
-                    "ফরওয়ার্ড",
-                    "মিডফিল্ডার",
-                    "ডিফেন্ডার",
-                    "গোলকিপার",
-                  ].map((p) {
-                    return RadioListTile<String>(
-                      title: Text(p, style: const TextStyle(color: Colors.white)),
-                      value: p,
-                      groupValue: selectedPosition,
-                      activeColor: Colors.green,
-                      onChanged: (val) {
-                        setState(() => selectedPosition = val);
-                      },
-                    );
-                  })
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("বাতিল", style: TextStyle(color: Colors.white)),
-                ),
-                TextButton(
-                  onPressed: selectedPosition == null
-                      ? null
-                      : () async {
-                    Navigator.pop(context);
-
-                    showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (_) =>
-                      const Center(child: CircularProgressIndicator()),
-                    );
-
-                    bool ok = await player.createPlayerProfile(
-                      user: auth.currentUser!,
-                      position: selectedPosition!,
-                    );
-
-                    Navigator.pop(context);
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(ok
-                            ? "✅ প্লেয়ার প্রোফাইল তৈরি সফল!"
-                            : (player.errorMessage ??
-                            "প্লেয়ার প্রোফাইল তৈরি ব্যর্থ")),
-                        backgroundColor: ok ? Colors.green : Colors.red,
-                      ),
-                    );
-
-                    if (ok) setState(() {});
-                  },
-                  child:
-                  const Text("তৈরি করুন", style: TextStyle(color: Colors.green)),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  // -------------------------------------------------------------
-  // ✅ LOGOUT DIALOG
-  // -------------------------------------------------------------
-
-  void _showLogoutDialog(
-      BuildContext context, AuthProvider authProvider) {
-    showDialog(
-      context: context,
-      builder: (_) {
         return AlertDialog(
           backgroundColor: const Color(0xFF16213E),
-          title: const Text("লগআউট", style: TextStyle(color: Colors.white)),
-          content: const Text("আপনি কি লগআউট করতে চান?",
-              style: TextStyle(color: Colors.white70)),
+          title: const Text(
+            'লগআউট',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: const Text(
+            'আপনি কি লগআউট করতে চান?',
+            style: TextStyle(color: Colors.white70),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("না", style: TextStyle(color: Colors.white)),
+              child: const Text('না'),
             ),
             TextButton(
               onPressed: () async {
                 await authProvider.signOut();
                 if (context.mounted) {
-                  Navigator.pushReplacementNamed(context, "/login");
+                  // '/login' রুটে যেতে চাইলে নিশ্চিত করুন এটি আপনার অ্যাপে সংজ্ঞায়িত আছে
+                  Navigator.pushReplacementNamed(context, '/login');
                 }
               },
-              child:
-              const Text("হ্যাঁ", style: TextStyle(color: Colors.redAccent)),
+              child: const Text(
+                'হ্যাঁ',
+                style: TextStyle(color: Colors.red),
+              ),
             ),
           ],
         );

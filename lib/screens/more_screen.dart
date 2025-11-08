@@ -81,6 +81,7 @@ class MoreScreen extends StatelessWidget {
                             fontSize: 14,
                           ),
                         ),
+
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
                           onPressed: () {
