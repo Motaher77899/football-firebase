@@ -677,8 +677,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       position: selectedPosition!,
                     );
 
+
                     if (mounted) {
                       Navigator.pop(context);
+
 
                       if (success) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -720,3 +722,4 @@ class _CommunityScreenState extends State<CommunityScreen> {
     );
   }
 }
+

@@ -67,25 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
             color: Colors.white,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.shield, color: Colors.white),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const TeamListScreen(),
-                ),
-              );
-            },
-            tooltip: 'দলের তালিকা',
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            onPressed: _loadData,
-            tooltip: 'Refresh',
-          ),
-        ],
+
       ),
       body: Column(
         children: [
@@ -286,11 +268,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _loadData,
-        backgroundColor: const Color(0xFF0F3460),
-        child: const Icon(Icons.refresh, color: Colors.white),
-      ),
+
     );
   }
 
