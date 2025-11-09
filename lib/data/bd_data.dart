@@ -10,7 +10,7 @@ class BDInfo {
   static List<String> getDistrictsByDivision(String division) {
     final Map<String, List<String>> data = {
       "ঢাকা": ["ঢাকা", "গাজীপুর", "নারায়ণগঞ্জ", "টাঙ্গাইল", "কিশোরগঞ্জ"],
-      "চট্টগ্রাম": ["চট্টগ্রাম", "কক্সবাজার", "রাঙামাটি", "বান্দরবান"],  //'Lakshmipur','Feni',"Chadpur","Nowakhali"
+      "চট্টগ্রাম": ["চট্টগ্রাম", "কক্সবাজার", "রাঙামাটি", "বান্দরবান",'Lakshmipur','Feni',"Chadpur","Nowakhali"],  //'Lakshmipur','Feni',"Chadpur","Nowakhali"
       "রাজশাহী": ["রাজশাহী", "বগুড়া", "পাবনা", "নাটোর"],
       "খুলনা": ["খুলনা", "যশোর", "সাতক্ষীরা", "বাগেরহাট"],
       "বরিশাল": ["বরিশাল", "পটুয়াখালী", "ভোলা"],
@@ -28,6 +28,7 @@ class BDInfo {
       "গাজীপুর": ["টঙ্গী", "কালিয়াকৈর", "শ্রীপুর"],
       "চট্টগ্রাম": ["হালিশহর", "পাঁচলাইশ", "কর্ণফুলী"],
       "কক্সবাজার": ["কক্সবাজার সদর", "উখিয়া", "টেকনাফ"],
+      "Lakshmipur": ["Raipur", "Ramgonj", "Ramgoti","Chondogonj"],
       // আরো চাইলে যোগ করো
     };
     return data[district] ?? ["${district} সদর"];

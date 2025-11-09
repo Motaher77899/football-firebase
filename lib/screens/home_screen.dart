@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:football_user_app/screens/team_list_screen.dart';
 import 'package:intl/intl.dart';
 import '../models/match_model.dart';
 import '../providers/match_provider.dart';
@@ -7,6 +6,7 @@ import '../providers/team_provider.dart';
 import '../widgets/match_card.dart';
 import '../widgets/date_scroll_bar.dart';
 import 'match_details_screen.dart';
+import 'team_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -60,21 +60,37 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: const Color(0xFF16213E),
         elevation: 0,
         title: const Text(
-          '⚽ Football Live Score',
+          '⚽ ফুটবল লাইভ স্কোর',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 22,
             color: Colors.white,
           ),
         ),
-
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.shield, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const TeamListScreen(),
+                ),
+              );
+            },
+            tooltip: 'দলের তালিকা',
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: _loadData,
+            tooltip: 'Refresh',
+          ),
+        ],
       ),
       body: Column(
-
         children: [
           // Date Scroll Bar
           Container(
-
             color: const Color(0xFF16213E),
             child: DateScrollBar(
               onDateSelected: _onDateSelected,
@@ -105,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         SizedBox(height: 16),
                         Text(
-                          'Data lodding...',
+                          'ডেটা লোড হচ্ছে...',
                           style: TextStyle(color: Colors.white70),
                         ),
                       ],
@@ -135,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: _loadData,
-                          child: const Text('Try again'),
+                          child: const Text('আবার চেষ্টা করুন'),
                         ),
                       ],
                     ),
@@ -154,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 16),
                         const Text(
-                          'No Match',
+                          'কোন ম্যাচ নেই',
                           style: TextStyle(
                             fontSize: 20,
                             color: Colors.white70,
@@ -186,18 +202,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // Filter matches by selected date
                 List<MatchModel> allMatches = snapshot.data!;
-                List<MatchModel> filteredMatches =
-                    _filterMatchesByDate(allMatches);
+                List<MatchModel> filteredMatches = _filterMatchesByDate(allMatches);
 
                 // Separate by status
                 List<MatchModel> liveMatches =
-                    filteredMatches.where((m) => m.status == 'live').toList();
-                List<MatchModel> upcomingMatches = filteredMatches
-                    .where((m) => m.status == 'upcoming')
-                    .toList();
-                List<MatchModel> finishedMatches = filteredMatches
-                    .where((m) => m.status == 'finished')
-                    .toList();
+                filteredMatches.where((m) => m.status == 'live').toList();
+                List<MatchModel> upcomingMatches =
+                filteredMatches.where((m) => m.status == 'upcoming').toList();
+                List<MatchModel> finishedMatches =
+                filteredMatches.where((m) => m.status == 'finished').toList();
 
                 debugPrint('🔴 Live: ${liveMatches.length}');
                 debugPrint('📅 Upcoming: ${upcomingMatches.length}');
@@ -216,7 +229,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 16),
                         const Text(
-                          'No Match This Date',
+                          'এই তারিখে কোন ম্যাচ নেই',
                           style: TextStyle(
                             fontSize: 18,
                             color: Colors.white70,
@@ -245,8 +258,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       // Live Matches Section
                       if (liveMatches.isNotEmpty) ...[
-                        _buildSectionHeader(
-                            '🔴 Live', liveMatches.length),
+                        _buildSectionHeader('🔴 লাইভ ম্যাচ', liveMatches.length),
                         const SizedBox(height: 12),
                         ...liveMatches.map((match) => _buildMatchCard(match)),
                         const SizedBox(height: 24),
@@ -254,21 +266,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
                       // Upcoming Matches Section
                       if (upcomingMatches.isNotEmpty) ...[
-                        _buildSectionHeader(
-                            '📅 Upcoming', upcomingMatches.length),
+                        _buildSectionHeader('📅 আসন্ন ম্যাচ', upcomingMatches.length),
                         const SizedBox(height: 12),
-                        ...upcomingMatches
-                            .map((match) => _buildMatchCard(match)),
+                        ...upcomingMatches.map((match) => _buildMatchCard(match)),
                         const SizedBox(height: 24),
                       ],
 
                       // Finished Matches Section
                       if (finishedMatches.isNotEmpty) ...[
-                        _buildSectionHeader(
-                            '✅ Finished', finishedMatches.length),
+                        _buildSectionHeader('✅ সমাপ্ত ম্যাচ', finishedMatches.length),
                         const SizedBox(height: 12),
-                        ...finishedMatches
-                            .map((match) => _buildMatchCard(match)),
+                        ...finishedMatches.map((match) => _buildMatchCard(match)),
                       ],
                     ],
                   ),
@@ -278,7 +286,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-
+      floatingActionButton: FloatingActionButton(
+        onPressed: _loadData,
+        backgroundColor: const Color(0xFF0F3460),
+        child: const Icon(Icons.refresh, color: Colors.white),
+      ),
     );
   }
 
@@ -320,8 +332,8 @@ class _HomeScreenState extends State<HomeScreen> {
           context,
           MaterialPageRoute(
             builder: (context) => MatchDetailsScreen(
-              match: match,
-              teamProvider: _teamProvider,
+              match: match, teamProvider: _teamProvider,
+              
             ),
           ),
         );
