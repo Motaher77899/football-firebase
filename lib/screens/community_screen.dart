@@ -689,6 +689,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             backgroundColor: Colors.green,
                             duration: Duration(seconds: 2),
                           ),
+
                         );
                         await Future.delayed(const Duration(milliseconds: 500));
                         if (mounted) {

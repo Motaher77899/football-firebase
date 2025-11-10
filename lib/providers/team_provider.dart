@@ -70,4 +70,5 @@ class TeamProvider extends ChangeNotifier {
       debugPrint('Error adding team: $e');
     }
   }
+
 }

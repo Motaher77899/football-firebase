@@ -37,17 +37,18 @@ class _FavouriteScreenState extends State<FavouriteScreen>
 
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A2E),
+
       body: CustomScrollView(
         slivers: [
           // ✅ Header
           SliverAppBar(
-            expandedHeight: 220,
+            expandedHeight: 5,
             floating: false,
             pinned: true,
             backgroundColor: const Color(0xFF16213E),
             elevation: 0,
             flexibleSpace: FlexibleSpaceBar(
-              background: _buildHeader(),
+
               stretchModes: const [StretchMode.zoomBackground],
             ),
             bottom: TabBar(
@@ -90,69 +91,7 @@ class _FavouriteScreenState extends State<FavouriteScreen>
     );
   }
 
-  // ✅ Header Widget
-  Widget _buildHeader() {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF0F3460), Color(0xFF1A5490)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Heart Icon
-          Container(
-            width: 90,
-            height: 90,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFF6B6B), Color(0xFFFF8E8E)],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.red.withOpacity(0.4),
-                  blurRadius: 25,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.favorite,
-              color: Colors.white,
-              size: 45,
-            ),
-          ),
-          const SizedBox(height: 16),
 
-          // Title
-          const Text(
-            '❤️ প্রিয় সংগ্রহ',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.2,
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // Subtitle
-          const Text(
-            'খেলোয়াড় এবং টিমের প্রিয় তালিকা',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 15,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   // ✅ Players Tab
   Widget _buildPlayersTab() {
