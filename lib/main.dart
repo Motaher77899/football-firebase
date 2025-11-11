@@ -5,6 +5,9 @@ import 'dart:ui';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:football_user_app/providers/match_provider.dart';
+import 'package:football_user_app/providers/team_provider.dart';
+import 'package:football_user_app/providers/tournament_provider.dart';
 import 'package:provider/provider.dart';
 import 'fcm_service.dart';
 import 'firebase_options.dart';
@@ -47,6 +50,9 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => PlayerProvider()),
+        ChangeNotifierProvider(create: (_) => MatchProvider()),
+        ChangeNotifierProvider(create: (_) => TeamProvider()),
+        ChangeNotifierProvider(create: (_) => TournamentProvider()),
       ],
       child: MaterialApp(
         title: 'Football Live Score',
