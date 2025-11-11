@@ -1,3 +1,329 @@
+// import 'package:flutter/material.dart';
+// import 'package:intl/intl.dart';
+// import '../models/match_model.dart';
+// import '../providers/match_provider.dart';
+// import '../providers/team_provider.dart';
+// import '../widgets/match_card.dart';
+// import '../widgets/date_scroll_bar.dart';
+// import 'match_details_screen.dart';
+// import 'team_list_screen.dart';
+//
+// class HomeScreen extends StatefulWidget {
+//   const HomeScreen({Key? key}) : super(key: key);
+//
+//   @override
+//   State<HomeScreen> createState() => _HomeScreenState();
+// }
+//
+// class _HomeScreenState extends State<HomeScreen> {
+//   final MatchProvider _matchProvider = MatchProvider();
+//   final TeamProvider _teamProvider = TeamProvider();
+//   DateTime? _selectedDate;
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     _selectedDate = DateTime.now();
+//     _loadData();
+//   }
+//
+//   Future<void> _loadData() async {
+//     debugPrint('🔄 Loading data...');
+//     await _teamProvider.fetchTeams();
+//     await _matchProvider.fetchMatches();
+//     debugPrint('✅ Data loaded');
+//   }
+//
+//   // Filter matches by selected date
+//   List<MatchModel> _filterMatchesByDate(List<MatchModel> matches) {
+//     if (_selectedDate == null) return matches;
+//
+//     return matches.where((match) {
+//       final matchDate = DateFormat('yyyyMMdd').format(match.date);
+//       final selectedDateStr = DateFormat('yyyyMMdd').format(_selectedDate!);
+//       return matchDate == selectedDateStr;
+//     }).toList();
+//   }
+//
+//   void _onDateSelected(DateTime date) {
+//     setState(() {
+//       _selectedDate = date;
+//     });
+//     debugPrint('📅 Selected date: ${DateFormat('dd MMM yyyy').format(date)}');
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       backgroundColor: const Color(0xFF1A1A2E),
+//       appBar: AppBar(
+//         backgroundColor: const Color(0xFF16213E),
+//         elevation: 0,
+//         title: const Text(
+//           '⚽ ফুটবল লাইভ স্কোর',
+//           style: TextStyle(
+//             fontWeight: FontWeight.bold,
+//             fontSize: 22,
+//             color: Colors.white,
+//           ),
+//         ),
+//
+//       ),
+//       body: Column(
+//         children: [
+//           // Date Scroll Bar
+//           Container(
+//             color: const Color(0xFF16213E),
+//             child: DateScrollBar(
+//               onDateSelected: _onDateSelected,
+//             ),
+//           ),
+//
+//           // Matches List
+//           Expanded(
+//             child: StreamBuilder<List<MatchModel>>(
+//               stream: _matchProvider.streamMatches(),
+//               builder: (context, snapshot) {
+//                 // Debug information
+//                 debugPrint('📊 Connection State: ${snapshot.connectionState}');
+//                 debugPrint('📊 Has Data: ${snapshot.hasData}');
+//                 debugPrint('📊 Data Length: ${snapshot.data?.length ?? 0}');
+//                 debugPrint('📊 Has Error: ${snapshot.hasError}');
+//                 if (snapshot.hasError) {
+//                   debugPrint('❌ Error: ${snapshot.error}');
+//                 }
+//
+//                 if (snapshot.connectionState == ConnectionState.waiting) {
+//                   return const Center(
+//                     child: Column(
+//                       mainAxisAlignment: MainAxisAlignment.center,
+//                       children: [
+//                         CircularProgressIndicator(
+//                           color: Color(0xFF0F3460),
+//                         ),
+//                         SizedBox(height: 16),
+//                         Text(
+//                           'ডেটা লোড হচ্ছে...',
+//                           style: TextStyle(color: Colors.white70),
+//                         ),
+//                       ],
+//                     ),
+//                   );
+//                 }
+//
+//                 if (snapshot.hasError) {
+//                   return Center(
+//                     child: Column(
+//                       mainAxisAlignment: MainAxisAlignment.center,
+//                       children: [
+//                         const Icon(
+//                           Icons.error_outline,
+//                           color: Colors.red,
+//                           size: 60,
+//                         ),
+//                         const SizedBox(height: 16),
+//                         Text(
+//                           'Error: ${snapshot.error}',
+//                           style: const TextStyle(
+//                             fontSize: 16,
+//                             color: Colors.white70,
+//                           ),
+//                           textAlign: TextAlign.center,
+//                         ),
+//                         const SizedBox(height: 16),
+//                         ElevatedButton(
+//                           onPressed: _loadData,
+//                           child: const Text('আবার চেষ্টা করুন'),
+//                         ),
+//                       ],
+//                     ),
+//                   );
+//                 }
+//
+//                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
+//                   return Center(
+//                     child: Column(
+//                       mainAxisAlignment: MainAxisAlignment.center,
+//                       children: [
+//                         const Icon(
+//                           Icons.sports_soccer,
+//                           color: Colors.white30,
+//                           size: 80,
+//                         ),
+//                         const SizedBox(height: 16),
+//                         const Text(
+//                           'কোন ম্যাচ নেই',
+//                           style: TextStyle(
+//                             fontSize: 20,
+//                             color: Colors.white70,
+//                             fontWeight: FontWeight.bold,
+//                           ),
+//                         ),
+//                         const SizedBox(height: 8),
+//                         const Text(
+//                           'Firebase এ ডেটা যোগ করুন',
+//                           style: TextStyle(
+//                             fontSize: 14,
+//                             color: Colors.white54,
+//                           ),
+//                         ),
+//                         const SizedBox(height: 24),
+//                         ElevatedButton.icon(
+//                           onPressed: _loadData,
+//                           icon: const Icon(Icons.refresh),
+//                           label: const Text('Refresh করুন'),
+//                           style: ElevatedButton.styleFrom(
+//                             backgroundColor: const Color(0xFF0F3460),
+//                             foregroundColor: Colors.white,
+//                           ),
+//                         ),
+//                       ],
+//                     ),
+//                   );
+//                 }
+//
+//                 // Filter matches by selected date
+//                 List<MatchModel> allMatches = snapshot.data!;
+//                 List<MatchModel> filteredMatches = _filterMatchesByDate(allMatches);
+//
+//                 // Separate by status
+//                 List<MatchModel> liveMatches =
+//                 filteredMatches.where((m) => m.status == 'live').toList();
+//                 List<MatchModel> upcomingMatches =
+//                 filteredMatches.where((m) => m.status == 'upcoming').toList();
+//                 List<MatchModel> finishedMatches =
+//                 filteredMatches.where((m) => m.status == 'finished').toList();
+//
+//                 debugPrint('🔴 Live: ${liveMatches.length}');
+//                 debugPrint('📅 Upcoming: ${upcomingMatches.length}');
+//                 debugPrint('✅ Finished: ${finishedMatches.length}');
+//
+//                 // Show empty state if no matches for selected date
+//                 if (filteredMatches.isEmpty) {
+//                   return Center(
+//                     child: Column(
+//                       mainAxisAlignment: MainAxisAlignment.center,
+//                       children: [
+//                         const Icon(
+//                           Icons.event_busy,
+//                           color: Colors.white30,
+//                           size: 80,
+//                         ),
+//                         const SizedBox(height: 16),
+//                         const Text(
+//                           'এই তারিখে কোন ম্যাচ নেই',
+//                           style: TextStyle(
+//                             fontSize: 18,
+//                             color: Colors.white70,
+//                             fontWeight: FontWeight.bold,
+//                           ),
+//                         ),
+//                         const SizedBox(height: 8),
+//                         Text(
+//                           DateFormat('dd MMMM yyyy').format(_selectedDate!),
+//                           style: const TextStyle(
+//                             fontSize: 14,
+//                             color: Colors.white54,
+//                           ),
+//                         ),
+//                       ],
+//                     ),
+//                   );
+//                 }
+//
+//                 // Build matches list grouped by status
+//                 return RefreshIndicator(
+//                   onRefresh: _loadData,
+//                   color: const Color(0xFF0F3460),
+//                   child: ListView(
+//                     padding: const EdgeInsets.all(16),
+//                     children: [
+//                       // Live Matches Section
+//                       if (liveMatches.isNotEmpty) ...[
+//                         _buildSectionHeader('🔴 লাইভ ম্যাচ', liveMatches.length),
+//                         const SizedBox(height: 12),
+//                         ...liveMatches.map((match) => _buildMatchCard(match)),
+//                         const SizedBox(height: 24),
+//                       ],
+//
+//                       // Upcoming Matches Section
+//                       if (upcomingMatches.isNotEmpty) ...[
+//                         _buildSectionHeader('📅 আসন্ন ম্যাচ', upcomingMatches.length),
+//                         const SizedBox(height: 12),
+//                         ...upcomingMatches.map((match) => _buildMatchCard(match)),
+//                         const SizedBox(height: 24),
+//                       ],
+//
+//                       // Finished Matches Section
+//                       if (finishedMatches.isNotEmpty) ...[
+//                         _buildSectionHeader('✅ সমাপ্ত ম্যাচ', finishedMatches.length),
+//                         const SizedBox(height: 12),
+//                         ...finishedMatches.map((match) => _buildMatchCard(match)),
+//                       ],
+//                     ],
+//                   ),
+//                 );
+//               },
+//             ),
+//           ),
+//         ],
+//       ),
+//
+//     );
+//   }
+//
+//   Widget _buildSectionHeader(String title, int count) {
+//     return Row(
+//       children: [
+//         Text(
+//           title,
+//           style: const TextStyle(
+//             fontSize: 18,
+//             fontWeight: FontWeight.bold,
+//             color: Colors.white,
+//           ),
+//         ),
+//         const SizedBox(width: 8),
+//         Container(
+//           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+//           decoration: BoxDecoration(
+//             color: const Color(0xFF0F3460),
+//             borderRadius: BorderRadius.circular(12),
+//           ),
+//           child: Text(
+//             '$count',
+//             style: const TextStyle(
+//               fontSize: 12,
+//               fontWeight: FontWeight.bold,
+//               color: Colors.white,
+//             ),
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+//
+//   Widget _buildMatchCard(MatchModel match) {
+//     return GestureDetector(
+//       onTap: () {
+//         Navigator.push(
+//           context,
+//           MaterialPageRoute(
+//             builder: (context) => MatchDetailsScreen(
+//               match: match, teamProvider: _teamProvider,
+//
+//             ),
+//           ),
+//         );
+//       },
+//       child: MatchCard(
+//         match: match,
+//         teamProvider: _teamProvider,
+//       ),
+//     );
+//   }
+// }
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/match_model.dart';
@@ -6,7 +332,6 @@ import '../providers/team_provider.dart';
 import '../widgets/match_card.dart';
 import '../widgets/date_scroll_bar.dart';
 import 'match_details_screen.dart';
-import 'team_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -59,15 +384,31 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF16213E),
         elevation: 0,
-        title: const Text(
-          '⚽ ফুটবল লাইভ স্কোর',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-            color: Colors.white,
-          ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F3460),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.sports_soccer,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'ফুটবল লাইভ স্কোর',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 22,
+                color: Colors.white,
+              ),
+            ),
+          ],
         ),
-
       ),
       body: Column(
         children: [
@@ -88,10 +429,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 debugPrint('📊 Connection State: ${snapshot.connectionState}');
                 debugPrint('📊 Has Data: ${snapshot.hasData}');
                 debugPrint('📊 Data Length: ${snapshot.data?.length ?? 0}');
-                debugPrint('📊 Has Error: ${snapshot.hasError}');
-                if (snapshot.hasError) {
-                  debugPrint('❌ Error: ${snapshot.error}');
-                }
 
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
@@ -99,12 +436,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         CircularProgressIndicator(
-                          color: Color(0xFF0F3460),
+                          color: Color(0xFF00D9FF),
                         ),
                         SizedBox(height: 16),
                         Text(
                           'ডেটা লোড হচ্ছে...',
-                          style: TextStyle(color: Colors.white70),
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 16,
+                          ),
                         ),
                       ],
                     ),
@@ -122,18 +462,30 @@ class _HomeScreenState extends State<HomeScreen> {
                           size: 60,
                         ),
                         const SizedBox(height: 16),
-                        Text(
-                          'Error: ${snapshot.error}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.white70,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 32),
+                          child: Text(
+                            'Error: ${snapshot.error}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.white70,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                          textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
                           onPressed: _loadData,
-                          child: const Text('আবার চেষ্টা করুন'),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('আবার চেষ্টা করুন'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF00D9FF),
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -173,8 +525,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           icon: const Icon(Icons.refresh),
                           label: const Text('Refresh করুন'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0F3460),
-                            foregroundColor: Colors.white,
+                            backgroundColor: const Color(0xFF00D9FF),
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
                           ),
                         ),
                       ],
@@ -184,19 +540,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // Filter matches by selected date
                 List<MatchModel> allMatches = snapshot.data!;
-                List<MatchModel> filteredMatches = _filterMatchesByDate(allMatches);
+                List<MatchModel> filteredMatches =
+                _filterMatchesByDate(allMatches);
 
                 // Separate by status
                 List<MatchModel> liveMatches =
                 filteredMatches.where((m) => m.status == 'live').toList();
-                List<MatchModel> upcomingMatches =
-                filteredMatches.where((m) => m.status == 'upcoming').toList();
-                List<MatchModel> finishedMatches =
-                filteredMatches.where((m) => m.status == 'finished').toList();
-
-                debugPrint('🔴 Live: ${liveMatches.length}');
-                debugPrint('📅 Upcoming: ${upcomingMatches.length}');
-                debugPrint('✅ Finished: ${finishedMatches.length}');
+                List<MatchModel> upcomingMatches = filteredMatches
+                    .where((m) => m.status == 'upcoming')
+                    .toList();
+                List<MatchModel> finishedMatches = filteredMatches
+                    .where((m) => m.status == 'finished')
+                    .toList();
 
                 // Show empty state if no matches for selected date
                 if (filteredMatches.isEmpty) {
@@ -234,13 +589,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Build matches list grouped by status
                 return RefreshIndicator(
                   onRefresh: _loadData,
-                  color: const Color(0xFF0F3460),
+                  color: const Color(0xFF00D9FF),
+                  backgroundColor: const Color(0xFF16213E),
                   child: ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
                       // Live Matches Section
                       if (liveMatches.isNotEmpty) ...[
-                        _buildSectionHeader('🔴 লাইভ ম্যাচ', liveMatches.length),
+                        _buildSectionHeader(
+                          icon: Icons.play_circle_filled,
+                          title: 'লাইভ ম্যাচ',
+                          count: liveMatches.length,
+                          color: Colors.red,
+                        ),
                         const SizedBox(height: 12),
                         ...liveMatches.map((match) => _buildMatchCard(match)),
                         const SizedBox(height: 24),
@@ -248,17 +609,29 @@ class _HomeScreenState extends State<HomeScreen> {
 
                       // Upcoming Matches Section
                       if (upcomingMatches.isNotEmpty) ...[
-                        _buildSectionHeader('📅 আসন্ন ম্যাচ', upcomingMatches.length),
+                        _buildSectionHeader(
+                          icon: Icons.schedule,
+                          title: 'আসন্ন ম্যাচ',
+                          count: upcomingMatches.length,
+                          color: Colors.orange,
+                        ),
                         const SizedBox(height: 12),
-                        ...upcomingMatches.map((match) => _buildMatchCard(match)),
+                        ...upcomingMatches
+                            .map((match) => _buildMatchCard(match)),
                         const SizedBox(height: 24),
                       ],
 
                       // Finished Matches Section
                       if (finishedMatches.isNotEmpty) ...[
-                        _buildSectionHeader('✅ সমাপ্ত ম্যাচ', finishedMatches.length),
+                        _buildSectionHeader(
+                          icon: Icons.check_circle,
+                          title: 'সমাপ্ত ম্যাচ',
+                          count: finishedMatches.length,
+                          color: Colors.green,
+                        ),
                         const SizedBox(height: 12),
-                        ...finishedMatches.map((match) => _buildMatchCard(match)),
+                        ...finishedMatches
+                            .map((match) => _buildMatchCard(match)),
                       ],
                     ],
                   ),
@@ -268,38 +641,66 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-
     );
   }
 
-  Widget _buildSectionHeader(String title, int count) {
-    return Row(
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+  Widget _buildSectionHeader({
+    required IconData icon,
+    required String title,
+    required int count,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF16213E),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 2,
         ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0F3460),
-            borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: 20,
+            ),
           ),
-          child: Text(
-            '$count',
+          const SizedBox(width: 12),
+          Text(
+            title,
             style: const TextStyle(
-              fontSize: 12,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
           ),
-        ),
-      ],
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              '$count',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -310,8 +711,8 @@ class _HomeScreenState extends State<HomeScreen> {
           context,
           MaterialPageRoute(
             builder: (context) => MatchDetailsScreen(
-              match: match, teamProvider: _teamProvider,
-              
+              match: match,
+              teamProvider: _teamProvider,
             ),
           ),
         );
