@@ -1,10 +1,18 @@
-// import 'package:flutter/material.dart';
-// import 'package:provider/provider.dart';
-// import '../providers/tournament_provider.dart';
-// import '../widgets/tournament_header_widget.dart';
-// import '../widgets/tournament_stats_widget.dart';
-// import '../widgets/tournament_tabs_widget.dart';
+
+
 //
+// import 'package:flutter/material.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:intl/intl.dart';
+// import 'package:provider/provider.dart';
+// import '../models/tournament.dart';
+// import '../models/tournament_model.dart';
+// import '../models/tournament_match_model.dart';
+// import '../models/tournament_player_stats_model.dart';
+// import '../models/tournament_team_stats_model.dart';
+// import '../models/tournament_team_model.dart';
+// import '../providers/team_provider.dart';
+// import '../widgets/tournament_match_card.dart';
 //
 // class TournamentDetailsScreen extends StatefulWidget {
 //   final String tournamentId;
@@ -15,214 +23,473 @@
 //   }) : super(key: key);
 //
 //   @override
-//   State<TournamentDetailsScreen> createState() => _TournamentDetailsScreenState();
+//   State<TournamentDetailsScreen> createState() =>
+//       _TournamentDetailsScreenState();
 // }
 //
-// class _TournamentDetailsScreenState extends State<TournamentDetailsScreen> {
+// class _TournamentDetailsScreenState extends State<TournamentDetailsScreen>
+//     with SingleTickerProviderStateMixin {
+//   late TabController _tabController;
+//   Tournament? _tournament;
+//   bool _isLoading = true;
+//   late TeamProvider _teamProvider;  // ✅ Added
+//
 //   @override
 //   void initState() {
 //     super.initState();
-//     WidgetsBinding.instance.addPostFrameCallback((_) {
-//       context.read<TournamentProvider>().fetchTournamentById(widget.tournamentId);
-//     });
+//     _tabController = TabController(length: 5, vsync: this);
+//     _teamProvider = TeamProvider();  // ✅ Initialize
+//     _loadData();  // ✅ Load both tournament and teams
 //   }
 //
 //   @override
 //   void dispose() {
-//     context.read<TournamentProvider>().clearSelectedTournament();
+//     _tabController.dispose();
 //     super.dispose();
+//   }
+//
+//   // ✅ Combined load method
+//   Future<void> _loadData() async {
+//     setState(() => _isLoading = true);
+//
+//     try {
+//       debugPrint('🔍 Loading tournament with ID: ${widget.tournamentId}');
+//
+//       // ✅ Load teams FIRST
+//       await _teamProvider.fetchTeams();
+//       debugPrint('✅ Teams loaded: ${_teamProvider.teams.length}');
+//       for (var team in _teamProvider.teams) {
+//         debugPrint('   📋 Team: ${team.id} - ${team.name}');
+//       }
+//
+//       // Load tournament
+//       final doc = await FirebaseFirestore.instance
+//           .collection('tournaments')
+//           .doc(widget.tournamentId)
+//           .get();
+//
+//       if (doc.exists && mounted) {
+//         debugPrint('✅ Tournament found: ${doc.data()?['name']}');
+//         setState(() {
+//           _tournament = Tournament.fromMap(
+//             doc.data() as Map<String, dynamic>,
+//             doc.id,
+//           );
+//           _isLoading = false;
+//         });
+//       } else {
+//         debugPrint('❌ Tournament not found');
+//         if (mounted) {
+//           setState(() => _isLoading = false);
+//         }
+//       }
+//     } catch (e) {
+//       debugPrint('❌ Error loading data: $e');
+//       if (mounted) {
+//         setState(() => _isLoading = false);
+//       }
+//     }
 //   }
 //
 //   @override
 //   Widget build(BuildContext context) {
+//     if (_isLoading) {
+//       return Scaffold(
+//         backgroundColor: const Color(0xFF1A1A2E),
+//         body: const Center(
+//           child: CircularProgressIndicator(
+//             color: Color(0xFF28A745),
+//           ),
+//         ),
+//       );
+//     }
+//
+//     if (_tournament == null) {
+//       return _buildErrorView();
+//     }
+//
 //     return Scaffold(
 //       backgroundColor: const Color(0xFF1A1A2E),
-//       body: Consumer<TournamentProvider>(
-//         builder: (context, provider, child) {
-//           if (provider.isLoading) {
-//             return const Center(
-//               child: CircularProgressIndicator(
-//                 color: Color(0xFF00D9FF),
+//       body: NestedScrollView(
+//         headerSliverBuilder: (context, innerBoxIsScrolled) {
+//           return [
+//             SliverAppBar(
+//               expandedHeight: 250,
+//               pinned: true,
+//               backgroundColor: const Color(0xFF16213E),
+//               flexibleSpace: FlexibleSpaceBar(
+//                 background: _buildHeaderImage(),
 //               ),
-//             );
-//           }
+//             ),
+//             SliverPersistentHeader(
+//               pinned: true,
+//               delegate: _SliverAppBarDelegate(
+//                 TabBar(
+//                   controller: _tabController,
+//                   indicatorColor: const Color(0xFF28A745),
+//                   indicatorWeight: 3,
+//                   labelColor: Colors.white,
+//                   unselectedLabelColor: Colors.white60,
+//                   isScrollable: true,
+//                   tabs: const [
+//                     Tab(text: '📋 Info'),
+//                     Tab(text: '⚽ Matches'),
+//                     Tab(text: '🏅 Player Stats'),
+//                     Tab(text: '📊 Team Stats'),
+//                     Tab(text: '👥 Teams'),
+//                   ],
+//                 ),
+//               ),
+//             ),
+//           ];
+//         },
+//         body: TabBarView(
+//           controller: _tabController,
+//           children: [
+//             _TournamentInfoTab(tournament: _tournament!),
+//             _MatchesTab(
+//               tournamentId: widget.tournamentId,
+//               teamProvider: _teamProvider,  // ✅ Pass TeamProvider
+//             ),
+//             _PlayerStatsTab(tournamentId: widget.tournamentId),
+//             _TeamStatsTab(tournamentId: widget.tournamentId),
+//             _TeamsTab(tournamentId: widget.tournamentId),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
 //
-//           if (provider.error != null) {
-//             return Center(
-//               child: Column(
-//                 mainAxisAlignment: MainAxisAlignment.center,
+//   Widget _buildHeaderImage() {
+//     final tournament = _tournament!;
+//     return Stack(
+//       fit: StackFit.expand,
+//       children: [
+//         // Background
+//         tournament.imageUrl.isNotEmpty
+//             ? Image.network(
+//           tournament.imageUrl,
+//           fit: BoxFit.cover,
+//           errorBuilder: (context, error, stackTrace) {
+//             return _buildDefaultHeaderImage();
+//           },
+//         )
+//             : _buildDefaultHeaderImage(),
+//
+//         // Gradient Overlay
+//         Container(
+//           decoration: BoxDecoration(
+//             gradient: LinearGradient(
+//               begin: Alignment.topCenter,
+//               end: Alignment.bottomCenter,
+//               colors: [
+//                 Colors.transparent,
+//                 Colors.black.withOpacity(0.8),
+//               ],
+//             ),
+//           ),
+//         ),
+//
+//         // Content
+//         Positioned(
+//           bottom: 16,
+//           left: 16,
+//           right: 16,
+//           child: Column(
+//             crossAxisAlignment: CrossAxisAlignment.start,
+//             children: [
+//               // Status Badge
+//               Container(
+//                 padding: const EdgeInsets.symmetric(
+//                   horizontal: 12,
+//                   vertical: 6,
+//                 ),
+//                 decoration: BoxDecoration(
+//                   color: _getStatusColor(tournament.status),
+//                   borderRadius: BorderRadius.circular(20),
+//                 ),
+//                 child: Text(
+//                   tournament.statusInBengali,
+//                   style: const TextStyle(
+//                     color: Colors.white,
+//                     fontSize: 12,
+//                     fontWeight: FontWeight.bold,
+//                   ),
+//                 ),
+//               ),
+//               const SizedBox(height: 8),
+//               // Tournament Name
+//               Text(
+//                 tournament.name,
+//                 style: const TextStyle(
+//                   color: Colors.white,
+//                   fontSize: 24,
+//                   fontWeight: FontWeight.bold,
+//                 ),
+//               ),
+//               const SizedBox(height: 4),
+//               // Location
+//               Row(
 //                 children: [
 //                   const Icon(
-//                     Icons.error_outline,
-//                     color: Colors.red,
-//                     size: 60,
+//                     Icons.location_on,
+//                     color: Color(0xFF28A745),
+//                     size: 16,
 //                   ),
-//                   const SizedBox(height: 16),
-//                   Padding(
-//                     padding: const EdgeInsets.symmetric(horizontal: 32),
+//                   const SizedBox(width: 4),
+//                   Expanded(
 //                     child: Text(
-//                       provider.error!,
+//                       tournament.location,
 //                       style: const TextStyle(
 //                         color: Colors.white70,
-//                         fontSize: 16,
+//                         fontSize: 14,
 //                       ),
-//                       textAlign: TextAlign.center,
-//                     ),
-//                   ),
-//                   const SizedBox(height: 24),
-//                   ElevatedButton.icon(
-//                     onPressed: () {
-//                       provider.refreshTournament(widget.tournamentId);
-//                     },
-//                     icon: const Icon(Icons.refresh),
-//                     label: const Text('আবার চেষ্টা করুন'),
-//                     style: ElevatedButton.styleFrom(
-//                       backgroundColor: const Color(0xFF00D9FF),
-//                       foregroundColor: Colors.black,
-//                       padding: const EdgeInsets.symmetric(
-//                         horizontal: 24,
-//                         vertical: 12,
-//                       ),
+//                       overflow: TextOverflow.ellipsis,
 //                     ),
 //                   ),
 //                 ],
 //               ),
-//             );
-//           }
+//             ],
+//           ),
+//         ),
+//       ],
+//     );
+//   }
 //
-//           if (provider.selectedTournament == null) {
-//             return const Center(
-//               child: Text(
-//                 'টুর্নামেন্ট পাওয়া যায়নি',
-//                 style: TextStyle(
-//                   color: Colors.white70,
-//                   fontSize: 16,
-//                 ),
-//               ),
-//             );
-//           }
-//
-//           final tournament = provider.selectedTournament!;
-//
-//           return RefreshIndicator(
-//             onRefresh: () => provider.refreshTournament(widget.tournamentId),
-//             color: const Color(0xFF00D9FF),
-//             backgroundColor: const Color(0xFF16213E),
-//             child: CustomScrollView(
-//               slivers: [
-//                 // App Bar with Tournament Header
-//                 SliverAppBar(
-//                   expandedHeight: 280,
-//                   pinned: true,
-//                   backgroundColor: const Color(0xFF16213E),
-//                   iconTheme: const IconThemeData(color: Colors.white),
-//                   flexibleSpace: FlexibleSpaceBar(
-//                     background: TournamentHeaderWidget(tournament: tournament),
-//                   ),
-//                 ),
-//
-//                 // Stats Section
-//                 SliverToBoxAdapter(
-//                   child: Padding(
-//                     padding: const EdgeInsets.all(16.0),
-//                     child: TournamentStatsWidget(
-//                       totalTeams: tournament.totalTeams,
-//                       totalMatches: tournament.totalMatches,
-//                       liveMatches: provider.liveMatchesCount,
-//                       completedMatches: provider.completedMatchesCount,
-//                     ),
-//                   ),
-//                 ),
-//
-//                 // Tournament Info
-//                 SliverToBoxAdapter(
-//                   child: _buildInfoSection(tournament),
-//                 ),
-//
-//                 // Tabs Section (Matches, Teams)
-//                 SliverFillRemaining(
-//                   child: TournamentTabsWidget(
-//                     matches: provider.tournamentMatches,
-//                     teams: provider.tournamentTeams,
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           );
-//         },
+//   Widget _buildDefaultHeaderImage() {
+//     return Container(
+//       decoration: const BoxDecoration(
+//         gradient: LinearGradient(
+//           colors: [Color(0xFF0F3460), Color(0xFF1A5490)],
+//         ),
+//       ),
+//       child: Center(
+//         child: Icon(
+//           Icons.emoji_events,
+//           size: 80,
+//           color: Colors.white.withOpacity(0.3),
+//         ),
 //       ),
 //     );
 //   }
 //
-//   Widget _buildInfoSection(tournament) {
-//     return Container(
-//       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-//       padding: const EdgeInsets.all(20),
-//       decoration: BoxDecoration(
-//         color: const Color(0xFF16213E),
-//         borderRadius: BorderRadius.circular(16),
-//         boxShadow: [
-//           BoxShadow(
-//             color: Colors.black.withOpacity(0.2),
-//             blurRadius: 10,
-//             offset: const Offset(0, 5),
-//           ),
-//         ],
+//   Widget _buildErrorView() {
+//     return Scaffold(
+//       backgroundColor: const Color(0xFF1A1A2E),
+//       body: Center(
+//         child: Column(
+//           mainAxisAlignment: MainAxisAlignment.center,
+//           children: [
+//             const Icon(Icons.error_outline, size: 80, color: Colors.red),
+//             const SizedBox(height: 16),
+//             const Text(
+//               'টুর্নামেন্ট খুঁজে পাওয়া যায়নি',
+//               style: TextStyle(color: Colors.white70, fontSize: 18),
+//             ),
+//             const SizedBox(height: 16),
+//             ElevatedButton(
+//               onPressed: () => Navigator.pop(context),
+//               style: ElevatedButton.styleFrom(
+//                 backgroundColor: const Color(0xFF28A745),
+//               ),
+//               child: const Text('ফিরে যান'),
+//             ),
+//           ],
+//         ),
 //       ),
+//     );
+//   }
+//
+//   Color _getStatusColor(String status) {
+//     switch (status) {
+//       case 'upcoming':
+//         return const Color(0xFF2196F3);
+//       case 'ongoing':
+//         return const Color(0xFF4CAF50);
+//       case 'completed':
+//         return const Color(0xFF757575);
+//       default:
+//         return const Color(0xFF757575);
+//     }
+//   }
+// }
+//
+// // SliverAppBar Delegate for TabBar
+// class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+//   final TabBar _tabBar;
+//
+//   _SliverAppBarDelegate(this._tabBar);
+//
+//   @override
+//   double get minExtent => _tabBar.preferredSize.height;
+//   @override
+//   double get maxExtent => _tabBar.preferredSize.height;
+//
+//   @override
+//   Widget build(
+//       BuildContext context, double shrinkOffset, bool overlapsContent) {
+//     return Container(
+//       color: const Color(0xFF16213E),
+//       child: _tabBar,
+//     );
+//   }
+//
+//   @override
+//   bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+//     return false;
+//   }
+// }
+//
+// // Tab 1: Tournament Info
+// class _TournamentInfoTab extends StatelessWidget {
+//   final Tournament tournament;
+//
+//   const _TournamentInfoTab({required this.tournament});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     final dateFormat = DateFormat('dd MMMM yyyy');
+//
+//     return SingleChildScrollView(
+//       padding: const EdgeInsets.all(16),
 //       child: Column(
 //         crossAxisAlignment: CrossAxisAlignment.start,
 //         children: [
-//           const Text(
-//             'টুর্নামেন্ট সম্পর্কে',
-//             style: TextStyle(
-//               color: Colors.white,
-//               fontSize: 20,
-//               fontWeight: FontWeight.bold,
+//           _buildSection(
+//             title: '📋 বিবরণ',
+//             child: Text(
+//               tournament.description,
+//               style: const TextStyle(
+//                 color: Colors.white70,
+//                 fontSize: 15,
+//                 height: 1.5,
+//               ),
 //             ),
 //           ),
 //           const SizedBox(height: 16),
-//
-//           if (tournament.description.isNotEmpty) ...[
-//             _buildInfoRow(
-//               Icons.description,
-//               'বিবরণ',
-//               tournament.description,
+//           _buildSection(
+//             title: '📅 সময়সূচী',
+//             child: Column(
+//               children: [
+//                 _buildInfoRow(
+//                   icon: Icons.play_circle_outline,
+//                   label: 'শুরু',
+//                   value: dateFormat.format(tournament.startDate),
+//                   iconColor: const Color(0xFF4CAF50),
+//                 ),
+//                 const SizedBox(height: 12),
+//                 _buildInfoRow(
+//                   icon: Icons.stop_circle_outlined,
+//                   label: 'শেষ',
+//                   value: dateFormat.format(tournament.endDate),
+//                   iconColor: const Color(0xFFFF5252),
+//                 ),
+//               ],
 //             ),
-//             const SizedBox(height: 12),
-//           ],
-//
-//           _buildInfoRow(
-//             Icons.location_on,
-//             'স্থান',
-//             tournament.location.isNotEmpty ? tournament.location : 'নির্ধারিত নয়',
 //           ),
-//           const SizedBox(height: 12),
-//
-//           _buildInfoRow(
-//             Icons.person,
-//             'আয়োজক',
-//             tournament.organizer.isNotEmpty ? tournament.organizer : 'অজানা',
-//           ),
-//           const SizedBox(height: 12),
-//
-//           _buildInfoRow(
-//             Icons.calendar_today,
-//             'সময়কাল',
-//             tournament.durationText,
+//           const SizedBox(height: 16),
+//           if (tournament.prizePool.isNotEmpty)
+//             _buildSection(
+//               title: '🏆 পুরস্কার',
+//               child: Container(
+//                 padding: const EdgeInsets.all(16),
+//                 decoration: BoxDecoration(
+//                   gradient: LinearGradient(
+//                     colors: [
+//                       const Color(0xFFFFD700).withOpacity(0.2),
+//                       const Color(0xFFFFA000).withOpacity(0.2),
+//                     ],
+//                   ),
+//                   borderRadius: BorderRadius.circular(12),
+//                   border: Border.all(color: const Color(0xFFFFD700), width: 2),
+//                 ),
+//                 child: Row(
+//                   children: [
+//                     const Icon(Icons.emoji_events,
+//                         size: 40, color: Color(0xFFFFD700)),
+//                     const SizedBox(width: 16),
+//                     Expanded(
+//                       child: Text(
+//                         tournament.prizePool,
+//                         style: const TextStyle(
+//                           color: Color(0xFFFFD700),
+//                           fontSize: 20,
+//                           fontWeight: FontWeight.bold,
+//                         ),
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//             ),
+//           const SizedBox(height: 16),
+//           _buildSection(
+//             title: '👤 আয়োজক',
+//             child: Column(
+//               children: [
+//                 _buildInfoRow(
+//                   icon: Icons.person,
+//                   label: 'নাম',
+//                   value: tournament.organizerName,
+//                 ),
+//                 if (tournament.organizerContact.isNotEmpty) ...[
+//                   const SizedBox(height: 12),
+//                   _buildInfoRow(
+//                     icon: Icons.phone,
+//                     label: 'যোগাযোগ',
+//                     value: tournament.organizerContact,
+//                     iconColor: const Color(0xFF4CAF50),
+//                   ),
+//                 ],
+//               ],
+//             ),
 //           ),
 //         ],
 //       ),
 //     );
 //   }
 //
-//   Widget _buildInfoRow(IconData icon, String label, String value) {
-//     return Row(
+//   Widget _buildSection({required String title, required Widget child}) {
+//     return Column(
 //       crossAxisAlignment: CrossAxisAlignment.start,
 //       children: [
-//         Icon(
-//           icon,
-//           color: const Color(0xFF00D9FF),
-//           size: 20,
+//         Text(
+//           title,
+//           style: const TextStyle(
+//             color: Colors.white,
+//             fontSize: 18,
+//             fontWeight: FontWeight.bold,
+//           ),
+//         ),
+//         const SizedBox(height: 12),
+//         Container(
+//           width: double.infinity,
+//           padding: const EdgeInsets.all(16),
+//           decoration: BoxDecoration(
+//             color: const Color(0xFF16213E),
+//             borderRadius: BorderRadius.circular(16),
+//           ),
+//           child: child,
+//         ),
+//       ],
+//     );
+//   }
+//
+//   Widget _buildInfoRow({
+//     required IconData icon,
+//     required String label,
+//     required String value,
+//     Color iconColor = Colors.white,
+//   }) {
+//     return Row(
+//       children: [
+//         Container(
+//           padding: const EdgeInsets.all(8),
+//           decoration: BoxDecoration(
+//             color: iconColor.withOpacity(0.2),
+//             borderRadius: BorderRadius.circular(8),
+//           ),
+//           child: Icon(icon, color: iconColor, size: 20),
 //         ),
 //         const SizedBox(width: 12),
 //         Expanded(
@@ -231,12 +498,9 @@
 //             children: [
 //               Text(
 //                 label,
-//                 style: const TextStyle(
-//                   color: Colors.white70,
-//                   fontSize: 12,
-//                 ),
+//                 style: const TextStyle(color: Colors.white54, fontSize: 13),
 //               ),
-//               const SizedBox(height: 4),
+//               const SizedBox(height: 2),
 //               Text(
 //                 value,
 //                 style: const TextStyle(
@@ -252,13 +516,185 @@
 //     );
 //   }
 // }
+//
+// // Tab 2: Matches (✅ WITH TeamProvider passed correctly)
+// class _MatchesTab extends StatelessWidget {
+//   final String tournamentId;
+//   final TeamProvider teamProvider;  // ✅ Added
+//
+//   const _MatchesTab({
+//     required this.tournamentId,
+//     required this.teamProvider,  // ✅ Required
+//   });
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     debugPrint('🔍 Matches Tab - Tournament ID: $tournamentId');
+//     debugPrint('👥 Matches Tab - Teams available: ${teamProvider.teams.length}');
+//
+//     return StreamBuilder<QuerySnapshot>(
+//       stream: FirebaseFirestore.instance
+//           .collection('tournament_matches')
+//           .where('tournamentId', isEqualTo: tournamentId)
+//           .snapshots(),
+//       builder: (context, snapshot) {
+//         if (snapshot.connectionState == ConnectionState.waiting) {
+//           return const Center(
+//             child: CircularProgressIndicator(color: Color(0xFF28A745)),
+//           );
+//         }
+//
+//         if (snapshot.hasError) {
+//           debugPrint('❌ Error loading matches: ${snapshot.error}');
+//           return Center(
+//             child: Column(
+//               mainAxisAlignment: MainAxisAlignment.center,
+//               children: [
+//                 const Icon(Icons.error_outline, size: 80, color: Colors.red),
+//                 const SizedBox(height: 16),
+//                 Text(
+//                   'Error: ${snapshot.error}',
+//                   style: const TextStyle(color: Colors.white54, fontSize: 14),
+//                   textAlign: TextAlign.center,
+//                 ),
+//               ],
+//             ),
+//           );
+//         }
+//
+//         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+//           debugPrint('📊 No matches found for tournament: $tournamentId');
+//           return _buildEmptyState(
+//             'এই টুর্নামেন্টের কোন ম্যাচ নেই',
+//             Icons.sports_soccer,
+//             'Firebase Console এ tournament_matches collection-এ ম্যাচ যোগ করুন',
+//           );
+//         }
+//
+//         final docs = snapshot.data!.docs;
+//         debugPrint('✅ Found ${docs.length} matches for tournament');
+//
+//         // Parse matches
+//         final matches = docs.map((doc) {
+//           try {
+//             final match = TournamentMatch.fromMap(
+//               doc.data() as Map<String, dynamic>,
+//               doc.id,
+//             );
+//             debugPrint('📄 Match: ${match.homeTeamId} vs ${match.awayTeamId}');
+//             return match;
+//           } catch (e) {
+//             debugPrint('❌ Error parsing match ${doc.id}: $e');
+//             return null;
+//           }
+//         }).whereType<TournamentMatch>().toList();
+//
+//         if (matches.isEmpty) {
+//           return _buildEmptyState(
+//             'ম্যাচ parse করতে সমস্যা হয়েছে',
+//             Icons.error_outline,
+//             'Match data format ঠিক নেই',
+//           );
+//         }
+//
+//         // Sort matches by date
+//         matches.sort((a, b) => a.matchDate.compareTo(b.matchDate));
+//
+//         return ListView.builder(
+//           padding: const EdgeInsets.all(16),
+//           itemCount: matches.length,
+//           itemBuilder: (context, index) {
+//             // ✅ Use TournamentMatchCard with TeamProvider
+//             return TournamentMatchCard(
+//               match: matches[index],
+//               teamProvider: teamProvider,  // ✅ Pass the provider
+//             );
+//           },
+//         );
+//       },
+//     );
+//   }
+//
+//   Widget _buildEmptyState(String message, IconData icon, [String? subtitle]) {
+//     return Center(
+//       child: Column(
+//         mainAxisAlignment: MainAxisAlignment.center,
+//         children: [
+//           Icon(icon, size: 80, color: Colors.white24),
+//           const SizedBox(height: 16),
+//           Text(
+//             message,
+//             style: const TextStyle(
+//               color: Colors.white54,
+//               fontSize: 16,
+//               fontWeight: FontWeight.bold,
+//             ),
+//             textAlign: TextAlign.center,
+//           ),
+//           if (subtitle != null) ...[
+//             const SizedBox(height: 8),
+//             Padding(
+//               padding: const EdgeInsets.symmetric(horizontal: 32),
+//               child: Text(
+//                 subtitle,
+//                 style: const TextStyle(
+//                   color: Colors.white38,
+//                   fontSize: 13,
+//                 ),
+//                 textAlign: TextAlign.center,
+//               ),
+//             ),
+//           ],
+//         ],
+//       ),
+//     );
+//   }
+// }
+//
+// // Tab 3-5: Keep existing Player Stats, Team Stats, Teams tabs...
+// // (Keep your existing code for these tabs)
+//
+// class _PlayerStatsTab extends StatelessWidget {
+//   final String tournamentId;
+//   const _PlayerStatsTab({required this.tournamentId});
+//   @override
+//   Widget build(BuildContext context) {
+//     return Center(child: Text('Player Stats', style: TextStyle(color: Colors.white)));
+//   }
+// }
+//
+// class _TeamStatsTab extends StatelessWidget {
+//   final String tournamentId;
+//   const _TeamStatsTab({required this.tournamentId});
+//   @override
+//   Widget build(BuildContext context) {
+//     return Center(child: Text('Team Stats', style: TextStyle(color: Colors.white)));
+//   }
+// }
+//
+// class _TeamsTab extends StatelessWidget {
+//   final String tournamentId;
+//   const _TeamsTab({required this.tournamentId});
+//   @override
+//   Widget build(BuildContext context) {
+//     return Center(child: Text('Teams', style: TextStyle(color: Colors.white)));
+//   }
+// }
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../models/tournament.dart';
-import '../providers/tournament_provider.dart';
 import '../models/tournament_model.dart';
+import '../models/tournament_match_model.dart';
+import '../models/tournament_player_stats_model.dart';
+import '../models/tournament_team_stats_model.dart';
+import '../models/tournament_team_model.dart';
+import '../models/match_model.dart';  // ✅ Added
+import '../providers/team_provider.dart';
+import '../widgets/tournament_match_card.dart';
+import 'match_details_screen.dart';  // ✅ Added
 
 class TournamentDetailsScreen extends StatefulWidget {
   final String tournamentId;
@@ -273,404 +709,228 @@ class TournamentDetailsScreen extends StatefulWidget {
       _TournamentDetailsScreenState();
 }
 
-class _TournamentDetailsScreenState extends State<TournamentDetailsScreen> {
+class _TournamentDetailsScreenState extends State<TournamentDetailsScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   Tournament? _tournament;
   bool _isLoading = true;
+  late TeamProvider _teamProvider;  // ✅ Added
 
   @override
   void initState() {
     super.initState();
-    _loadTournamentDetails();
+    _tabController = TabController(length: 5, vsync: this);
+    _teamProvider = TeamProvider();  // ✅ Initialize
+    _loadData();  // ✅ Load both tournament and teams
   }
 
-  Future<void> _loadTournamentDetails() async {
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  // ✅ Combined load method
+  Future<void> _loadData() async {
     setState(() => _isLoading = true);
 
-    final provider = Provider.of<TournamentProvider>(context, listen: false);
-    final tournament = await provider.getTournamentById(widget.tournamentId);
+    try {
+      debugPrint('🔍 Loading tournament with ID: ${widget.tournamentId}');
 
-    if (mounted) {
-      setState(() {
-        _tournament = tournament;
-        _isLoading = false;
-      });
+      // ✅ Load teams FIRST
+      await _teamProvider.fetchTeams();
+      debugPrint('✅ Teams loaded: ${_teamProvider.teams.length}');
+      for (var team in _teamProvider.teams) {
+        debugPrint('   📋 Team: ${team.id} - ${team.name}');
+      }
+
+      // Load tournament
+      final doc = await FirebaseFirestore.instance
+          .collection('tournaments')
+          .doc(widget.tournamentId)
+          .get();
+
+      if (doc.exists && mounted) {
+        debugPrint('✅ Tournament found: ${doc.data()?['name']}');
+        setState(() {
+          _tournament = Tournament.fromMap(
+            doc.data() as Map<String, dynamic>,
+            doc.id,
+          );
+          _isLoading = false;
+        });
+      } else {
+        debugPrint('❌ Tournament not found');
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading data: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF1A1A2E),
+        body: const Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFF28A745),
+          ),
+        ),
+      );
+    }
+
+    if (_tournament == null) {
+      return _buildErrorView();
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A2E),
-      body: _isLoading
-          ? const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFF28A745),
+      body: NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) {
+          return [
+            SliverAppBar(
+              expandedHeight: 250,
+              pinned: true,
+              backgroundColor: const Color(0xFF16213E),
+              flexibleSpace: FlexibleSpaceBar(
+                background: _buildHeaderImage(),
+              ),
+            ),
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _SliverAppBarDelegate(
+                TabBar(
+                  controller: _tabController,
+                  indicatorColor: const Color(0xFF28A745),
+                  indicatorWeight: 3,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.white60,
+                  isScrollable: true,
+                  tabs: const [
+                    Tab(text: '📋 Info'),
+                    Tab(text: '⚽ Matches'),
+                    Tab(text: '🏅 Player Stats'),
+                    Tab(text: '📊 Team Stats'),
+                    Tab(text: '👥 Teams'),
+                  ],
+                ),
+              ),
+            ),
+          ];
+        },
+        body: TabBarView(
+          controller: _tabController,
+          children: [
+            _TournamentInfoTab(tournament: _tournament!),
+            _MatchesTab(
+              tournamentId: widget.tournamentId,
+              teamProvider: _teamProvider,  // ✅ Pass TeamProvider
+            ),
+            _PlayerStatsTab(tournamentId: widget.tournamentId),
+            _TeamStatsTab(tournamentId: widget.tournamentId),
+            _TeamsTab(tournamentId: widget.tournamentId),
+          ],
         ),
-      )
-          : _tournament == null
-          ? _buildErrorView()
-          : _buildContent(),
-    );
-  }
-
-  Widget _buildErrorView() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.error_outline,
-            size: 80,
-            color: Colors.red,
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'টুর্নামেন্ট খুঁজে পাওয়া যায়নি',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 18,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF28A745),
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('ফিরে যান'),
-          ),
-        ],
       ),
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildHeaderImage() {
     final tournament = _tournament!;
-    final dateFormat = DateFormat('dd MMMM yyyy');
-    final timeFormat = DateFormat('hh:mm a');
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Background
+        tournament.imageUrl.isNotEmpty
+            ? Image.network(
+          tournament.imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return _buildDefaultHeaderImage();
+          },
+        )
+            : _buildDefaultHeaderImage(),
 
-    return CustomScrollView(
-      slivers: [
-        // App Bar with Image
-        SliverAppBar(
-          expandedHeight: 300,
-          pinned: true,
-          backgroundColor: const Color(0xFF16213E),
-          flexibleSpace: FlexibleSpaceBar(
-            background: Stack(
-              fit: StackFit.expand,
-              children: [
-                // Background Image
-                tournament.imageUrl.isNotEmpty
-                    ? Image.network(
-                  tournament.imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return _buildDefaultHeaderImage();
-                  },
-                )
-                    : _buildDefaultHeaderImage(),
-
-                // Gradient Overlay
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.7),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Status Badge
-                Positioned(
-                  top: 60,
-                  right: 16,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(tournament.status),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 8,
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _getStatusIcon(tournament.status),
-                          size: 18,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          tournament.statusInBengali,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+        // Gradient Overlay
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.transparent,
+                Colors.black.withOpacity(0.8),
               ],
             ),
           ),
         ),
 
         // Content
-        SliverToBoxAdapter(
+        Positioned(
+          bottom: 16,
+          left: 16,
+          right: 16,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Tournament Name & Basic Info
+              // Status Badge
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFF16213E),
-                      const Color(0xFF0F3460),
-                    ],
-                  ),
+                  color: _getStatusColor(tournament.status),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Tournament Name
-                    Text(
-                      tournament.name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Quick Stats
-                    Row(
-                      children: [
-                        _buildQuickStat(
-                          icon: Icons.groups,
-                          label: 'টিম',
-                          value: '${tournament.totalTeams}',
-                        ),
-                        const SizedBox(width: 24),
-                        _buildQuickStat(
-                          icon: Icons.location_on,
-                          label: 'স্থান',
-                          value: tournament.location,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Description Section
-              _buildSection(
-                title: '📋 বিবরণ',
                 child: Text(
-                  tournament.description,
+                  tournament.statusInBengali,
                   style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 15,
-                    height: 1.5,
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-
-              // Schedule Section
-              _buildSection(
-                title: '📅 সময়সূচী',
-                child: Column(
-                  children: [
-                    _buildInfoRow(
-                      icon: Icons.play_circle_outline,
-                      label: 'শুরুর তারিখ',
-                      value: dateFormat.format(tournament.startDate),
-                      iconColor: const Color(0xFF4CAF50),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildInfoRow(
-                      icon: Icons.stop_circle_outlined,
-                      label: 'শেষের তারিখ',
-                      value: dateFormat.format(tournament.endDate),
-                      iconColor: const Color(0xFFFF5252),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildInfoRow(
-                      icon: Icons.timer_outlined,
-                      label: 'সময়কাল',
-                      value: '${tournament.endDate.difference(tournament.startDate).inDays + 1} দিন',
-                      iconColor: const Color(0xFF2196F3),
-                    ),
-                  ],
+              const SizedBox(height: 8),
+              // Tournament Name
+              Text(
+                tournament.name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-
-              // Prize Pool (if available)
-              if (tournament.prizePool.isNotEmpty)
-                _buildSection(
-                  title: '🏆 পুরস্কার',
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          const Color(0xFFFFD700).withOpacity(0.2),
-                          const Color(0xFFFFA000).withOpacity(0.2),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: const Color(0xFFFFD700),
-                        width: 2,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.emoji_events,
-                          size: 40,
-                          color: Color(0xFFFFD700),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'মোট পুরস্কার',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                tournament.prizePool,
-                                style: const TextStyle(
-                                  color: Color(0xFFFFD700),
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+              const SizedBox(height: 4),
+              // Location
+              Row(
+                children: [
+                  const Icon(
+                    Icons.location_on,
+                    color: Color(0xFF28A745),
+                    size: 16,
                   ),
-                ),
-
-              // Organizer Section
-              _buildSection(
-                title: '👤 আয়োজক',
-                child: Column(
-                  children: [
-                    _buildInfoRow(
-                      icon: Icons.person,
-                      label: 'নাম',
-                      value: tournament.organizerName,
-                      iconColor: const Color(0xFF2196F3),
-                    ),
-                    if (tournament.organizerContact.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      _buildInfoRow(
-                        icon: Icons.phone,
-                        label: 'যোগাযোগ',
-                        value: tournament.organizerContact,
-                        iconColor: const Color(0xFF4CAF50),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-
-              // Location Section
-              _buildSection(
-                title: '📍 স্থান',
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF16213E),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xFF28A745),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF28A745).withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.location_on,
-                          color: Color(0xFF28A745),
-                          size: 32,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Text(
-                          tournament.location,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Teams Section Placeholder
-              _buildSection(
-                title: '👥 অংশগ্রহণকারী টিম',
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF16213E),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Center(
+                  const SizedBox(width: 4),
+                  Expanded(
                     child: Text(
-                      'টিমের তালিকা শীঘ্রই যোগ করা হবে',
-                      style: TextStyle(
-                        color: Colors.white54,
+                      tournament.location,
+                      style: const TextStyle(
+                        color: Colors.white70,
                         fontSize: 14,
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                ),
+                ],
               ),
-
-              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -680,90 +940,218 @@ class _TournamentDetailsScreenState extends State<TournamentDetailsScreen> {
 
   Widget _buildDefaultHeaderImage() {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            const Color(0xFF0F3460),
-            const Color(0xFF1A5490),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          colors: [Color(0xFF0F3460), Color(0xFF1A5490)],
         ),
       ),
       child: Center(
         child: Icon(
           Icons.emoji_events,
-          size: 120,
+          size: 80,
           color: Colors.white.withOpacity(0.3),
         ),
       ),
     );
   }
 
-  Widget _buildSection({
-    required String title,
-    required Widget child,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  Widget _buildErrorView() {
+    return Scaffold(
+      backgroundColor: const Color(0xFF1A1A2E),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 80, color: Colors.red),
+            const SizedBox(height: 16),
+            const Text(
+              'টুর্নামেন্ট খুঁজে পাওয়া যায়নি',
+              style: TextStyle(color: Colors.white70, fontSize: 18),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF28A745),
+              ),
+              child: const Text('ফিরে যান'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'upcoming':
+        return const Color(0xFF2196F3);
+      case 'ongoing':
+        return const Color(0xFF4CAF50);
+      case 'completed':
+        return const Color(0xFF757575);
+      default:
+        return const Color(0xFF757575);
+    }
+  }
+}
+
+// SliverAppBar Delegate for TabBar
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  final TabBar _tabBar;
+
+  _SliverAppBarDelegate(this._tabBar);
+
+  @override
+  double get minExtent => _tabBar.preferredSize.height;
+  @override
+  double get maxExtent => _tabBar.preferredSize.height;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: const Color(0xFF16213E),
+      child: _tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    return false;
+  }
+}
+
+// Tab 1: Tournament Info
+class _TournamentInfoTab extends StatelessWidget {
+  final Tournament tournament;
+
+  const _TournamentInfoTab({required this.tournament});
+
+  @override
+  Widget build(BuildContext context) {
+    final dateFormat = DateFormat('dd MMMM yyyy');
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+          _buildSection(
+            title: '📋 বিবরণ',
+            child: Text(
+              tournament.description,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 15,
+                height: 1.5,
+              ),
             ),
           ),
-          const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF16213E),
-              borderRadius: BorderRadius.circular(16),
+          const SizedBox(height: 16),
+          _buildSection(
+            title: '📅 সময়সূচী',
+            child: Column(
+              children: [
+                _buildInfoRow(
+                  icon: Icons.play_circle_outline,
+                  label: 'শুরু',
+                  value: dateFormat.format(tournament.startDate),
+                  iconColor: const Color(0xFF4CAF50),
+                ),
+                const SizedBox(height: 12),
+                _buildInfoRow(
+                  icon: Icons.stop_circle_outlined,
+                  label: 'শেষ',
+                  value: dateFormat.format(tournament.endDate),
+                  iconColor: const Color(0xFFFF5252),
+                ),
+              ],
             ),
-            child: child,
+          ),
+          const SizedBox(height: 16),
+          if (tournament.prizePool.isNotEmpty)
+            _buildSection(
+              title: '🏆 পুরস্কার',
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFFFFD700).withOpacity(0.2),
+                      const Color(0xFFFFA000).withOpacity(0.2),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFFFD700), width: 2),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.emoji_events,
+                        size: 40, color: Color(0xFFFFD700)),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Text(
+                        tournament.prizePool,
+                        style: const TextStyle(
+                          color: Color(0xFFFFD700),
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          const SizedBox(height: 16),
+          _buildSection(
+            title: '👤 আয়োজক',
+            child: Column(
+              children: [
+                _buildInfoRow(
+                  icon: Icons.person,
+                  label: 'নাম',
+                  value: tournament.organizerName,
+                ),
+                if (tournament.organizerContact.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _buildInfoRow(
+                    icon: Icons.phone,
+                    label: 'যোগাযোগ',
+                    value: tournament.organizerContact,
+                    iconColor: const Color(0xFF4CAF50),
+                  ),
+                ],
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildQuickStat({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Row(
+  Widget _buildSection({required String title, required Widget child}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          color: const Color(0xFF28A745),
-          size: 20,
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white54,
-                fontSize: 12,
-              ),
-            ),
-            Text(
-              value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF16213E),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: child,
         ),
       ],
     );
@@ -783,11 +1171,7 @@ class _TournamentDetailsScreenState extends State<TournamentDetailsScreen> {
             color: iconColor.withOpacity(0.2),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            icon,
-            color: iconColor,
-            size: 20,
-          ),
+          child: Icon(icon, color: iconColor, size: 20),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -796,10 +1180,7 @@ class _TournamentDetailsScreenState extends State<TournamentDetailsScreen> {
             children: [
               Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.white54,
-                  fontSize: 13,
-                ),
+                style: const TextStyle(color: Colors.white54, fontSize: 13),
               ),
               const SizedBox(height: 2),
               Text(
@@ -816,30 +1197,226 @@ class _TournamentDetailsScreenState extends State<TournamentDetailsScreen> {
       ],
     );
   }
+}
 
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'upcoming':
-        return const Color(0xFF2196F3);
-      case 'ongoing':
-        return const Color(0xFF4CAF50);
-      case 'completed':
-        return const Color(0xFF757575);
-      default:
-        return const Color(0xFF757575);
-    }
+// Tab 2: Matches (✅ WITH TeamProvider passed correctly)
+class _MatchesTab extends StatelessWidget {
+  final String tournamentId;
+  final TeamProvider teamProvider;  // ✅ Added
+
+  const _MatchesTab({
+    required this.tournamentId,
+    required this.teamProvider,  // ✅ Required
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    debugPrint('🔍 Matches Tab - Tournament ID: $tournamentId');
+    debugPrint('👥 Matches Tab - Teams available: ${teamProvider.teams.length}');
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('tournament_matches')
+          .where('tournamentId', isEqualTo: tournamentId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF28A745)),
+          );
+        }
+
+        if (snapshot.hasError) {
+          debugPrint('❌ Error loading matches: ${snapshot.error}');
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 80, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  'Error: ${snapshot.error}',
+                  style: const TextStyle(color: Colors.white54, fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          );
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          debugPrint('📊 No matches found for tournament: $tournamentId');
+          return _buildEmptyState(
+            'এই টুর্নামেন্টের কোন ম্যাচ নেই',
+            Icons.sports_soccer,
+            'Firebase Console এ tournament_matches collection-এ ম্যাচ যোগ করুন',
+          );
+        }
+
+        final docs = snapshot.data!.docs;
+        debugPrint('✅ Found ${docs.length} matches for tournament');
+
+        // Parse matches
+        final matches = docs.map((doc) {
+          try {
+            final match = TournamentMatch.fromMap(
+              doc.data() as Map<String, dynamic>,
+              doc.id,
+            );
+            debugPrint('📄 Match: ${match.homeTeamId} vs ${match.awayTeamId}');
+            return match;
+          } catch (e) {
+            debugPrint('❌ Error parsing match ${doc.id}: $e');
+            return null;
+          }
+        }).whereType<TournamentMatch>().toList();
+
+        if (matches.isEmpty) {
+          return _buildEmptyState(
+            'ম্যাচ parse করতে সমস্যা হয়েছে',
+            Icons.error_outline,
+            'Match data format ঠিক নেই',
+          );
+        }
+
+        // Sort matches by date
+        matches.sort((a, b) => a.matchDate.compareTo(b.matchDate));
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: matches.length,
+          itemBuilder: (context, index) {
+            final match = matches[index];
+
+            // ✅ Convert TournamentMatch to MatchModel
+            final matchModel = _convertToMatchModel(match, teamProvider);
+
+            if (matchModel == null) {
+              return TournamentMatchCard(
+                match: match,
+                teamProvider: teamProvider,
+              );
+            }
+
+            // ✅ Wrap with GestureDetector to navigate to MatchDetailsScreen
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MatchDetailsScreen(
+                      match: matchModel,
+                      teamProvider: teamProvider,
+                    ),
+                  ),
+                );
+              },
+              child: TournamentMatchCard(
+                match: match,
+                teamProvider: teamProvider,
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
-  IconData _getStatusIcon(String status) {
-    switch (status) {
-      case 'upcoming':
-        return Icons.schedule;
-      case 'ongoing':
-        return Icons.play_circle_filled;
-      case 'completed':
-        return Icons.check_circle;
-      default:
-        return Icons.circle;
+  Widget _buildEmptyState(String message, IconData icon, [String? subtitle]) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 80, color: Colors.white24),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: const TextStyle(
+              color: Colors.white54,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                subtitle,
+                style: const TextStyle(
+                  color: Colors.white38,
+                  fontSize: 13,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ✅ Convert TournamentMatch to MatchModel for navigation
+  MatchModel? _convertToMatchModel(
+      TournamentMatch match,
+      TeamProvider teamProvider,
+      ) {
+    try {
+      // Get team objects
+      final homeTeam = teamProvider.getTeamById(match.homeTeamId);
+      final awayTeam = teamProvider.getTeamById(match.awayTeamId);
+
+      if (homeTeam == null || awayTeam == null) {
+        debugPrint('❌ Cannot convert: teams not found');
+        return null;
+      }
+
+      return MatchModel(
+        id: match.id,
+        teamA: homeTeam.name,
+        teamB: awayTeam.name,
+        scoreA: match.homeScore,
+        scoreB: match.awayScore,
+        time: match.matchDate,
+        date: match.matchDate,
+        status: match.status,
+        tournament: match.tournamentId,
+        venue: match.venue,
+      );
+    } catch (e) {
+      debugPrint('❌ Error converting tournament match: $e');
+      return null;
     }
+  }
+}
+
+// Tab 3-5: Keep existing Player Stats, Team Stats, Teams tabs...
+// (Keep your existing code for these tabs)
+
+class _PlayerStatsTab extends StatelessWidget {
+  final String tournamentId;
+  const _PlayerStatsTab({required this.tournamentId});
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Player Stats', style: TextStyle(color: Colors.white)));
+  }
+}
+
+class _TeamStatsTab extends StatelessWidget {
+  final String tournamentId;
+  const _TeamStatsTab({required this.tournamentId});
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Team Stats', style: TextStyle(color: Colors.white)));
+  }
+}
+
+class _TeamsTab extends StatelessWidget {
+  final String tournamentId;
+  const _TeamsTab({required this.tournamentId});
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('Teams', style: TextStyle(color: Colors.white)));
   }
 }

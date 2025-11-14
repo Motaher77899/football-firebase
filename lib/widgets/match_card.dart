@@ -77,7 +77,7 @@
 //                   ],
 //                 ),
 //                 Text(
-//                   DateFormat('dd MMM, hh:mm a').format(match.matchTime),
+//                   DateFormat('dd MMM, hh:mm a').format(match.time),
 //                   style: const TextStyle(
 //                     color: Colors.white70,
 //                     fontSize: 12,

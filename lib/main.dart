@@ -23,8 +23,8 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  FCMService.initialize();
-  print(await FCMService.getToken());
+  // FCMService.initialize();
+  // print(await FCMService.getToken());
 
   // Flutter Error
   FlutterError.onError = (errorDetails) {
