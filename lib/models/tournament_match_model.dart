@@ -1,10 +1,11 @@
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class TournamentMatch {
   final String id;
   final String tournamentId;
-  final String homeTeamId;      // ✅ শুধু Team ID
-  final String awayTeamId;      // ✅ শুধু Team ID
+  final String homeTeamId;      // ✅ Team ID (supports both homeTeamId and teamAId)
+  final String awayTeamId;      // ✅ Team ID (supports both awayTeamId and teamBId)
   final int homeScore;
   final int awayScore;
   final String status;          // 'upcoming', 'live', 'completed'
@@ -27,14 +28,19 @@ class TournamentMatch {
     required this.round,
   });
 
+  // ✅ Updated factory to support BOTH field naming conventions
   factory TournamentMatch.fromMap(Map<String, dynamic> map, String id) {
     return TournamentMatch(
       id: id,
       tournamentId: map['tournamentId'] ?? '',
-      homeTeamId: map['homeTeamId'] ?? '',
-      awayTeamId: map['awayTeamId'] ?? '',
-      homeScore: map['homeScore'] ?? 0,
-      awayScore: map['awayScore'] ?? 0,
+      // ✅ Support both homeTeamId and teamAId
+      homeTeamId: map['homeTeamId'] ?? map['teamAId'] ?? '',
+      // ✅ Support both awayTeamId and teamBId
+      awayTeamId: map['awayTeamId'] ?? map['teamBId'] ?? '',
+      // ✅ Support both homeScore and scoreA
+      homeScore: map['homeScore'] ?? map['scoreA'] ?? 0,
+      // ✅ Support both awayScore and scoreB
+      awayScore: map['awayScore'] ?? map['scoreB'] ?? 0,
       status: map['status'] ?? 'upcoming',
       matchDate: _parseDateTime(map['matchDate']),
       matchTime: map['matchTime'] ?? '',
@@ -78,6 +84,7 @@ class TournamentMatch {
       case 'upcoming':
         return 'আসন্ন';
       case 'completed':
+      case 'finished':
         return 'সমাপ্ত';
       default:
         return status;
