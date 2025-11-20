@@ -1,3 +1,5 @@
+
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -21,6 +23,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
   }
 
   Future<void> _checkPlayerProfile() async {
+    setState(() => _isCheckingPlayer = true);
+
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
 
@@ -54,7 +58,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
             icon: const Icon(Icons.search, color: Colors.white),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Search (Coming Soon)')),
+                const SnackBar(
+                  content: Text('খুঁজুন (শীঘ্রই আসছে)'),
+                  backgroundColor: Color(0xFF28A745),
+                ),
               );
             },
           ),
@@ -64,9 +71,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
         builder: (context, authProvider, playerProvider, child) {
           return RefreshIndicator(
             onRefresh: _checkPlayerProfile,
-            color: const Color(0xFF0F3460),
+            color: const Color(0xFF28A745),
+            backgroundColor: const Color(0xFF16213E),
             child: ListView(
               padding: const EdgeInsets.all(16),
+              physics: const AlwaysScrollableScrollPhysics(),
               children: [
                 // Player Profile Section
                 if (_isCheckingPlayer)
@@ -146,6 +155,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   likes: 67,
                   comments: 23,
                 ),
+
+                const SizedBox(height: 80), // Bottom padding
               ],
             ),
           );
@@ -158,7 +169,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213E),
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF16213E),
+            Color(0xFF0F3460),
+          ],
+        ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -171,11 +187,21 @@ class _CommunityScreenState extends State<CommunityScreen> {
       child: const Center(
         child: Column(
           children: [
-            CircularProgressIndicator(color: Colors.white),
-            SizedBox(height: 12),
+            SizedBox(
+              width: 40,
+              height: 40,
+              child: CircularProgressIndicator(
+                color: Color(0xFF28A745),
+                strokeWidth: 3,
+              ),
+            ),
+            SizedBox(height: 16),
             Text(
               'প্লেয়ার প্রোফাইল চেক করা হচ্ছে...',
-              style: TextStyle(color: Colors.white70),
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+              ),
             ),
           ],
         ),
@@ -210,13 +236,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
       ),
       child: Column(
         children: [
-          // Icon
           Container(
             width: 80,
             height: 80,
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.2),
               shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withOpacity(0.3),
+                width: 2,
+              ),
             ),
             child: const Icon(
               Icons.sports_soccer,
@@ -225,10 +254,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Title
           const Text(
-            'Want to create a player account?',
+            'প্লেয়ার অ্যাকাউন্ট তৈরি করুন',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white,
@@ -237,29 +264,27 @@ class _CommunityScreenState extends State<CommunityScreen> {
             ),
           ),
           const SizedBox(height: 8),
-
-          // Description
           Text(
-            'প্লেয়ার অ্যাকাউন্ট তৈরি করুন এবং আপনার নিজস্ব প্লেয়ার আইডি পান',
+            'প্লেয়ার প্রোফাইল তৈরি করুন এবং আপনার নিজস্ব প্লেয়ার আইডি পান',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white.withOpacity(0.9),
               fontSize: 14,
+              height: 1.4,
             ),
           ),
           const SizedBox(height: 24),
-
-          // Create Button
           SizedBox(
             width: double.infinity,
             height: 56,
             child: ElevatedButton.icon(
-              onPressed: () => _showCreatePlayerDialog(
+              // সংশোধিত কল: now it's async
+              onPressed: () async => await _showCreatePlayerDialog(
                 context,
                 authProvider,
                 playerProvider,
               ),
-              icon: const Icon(Icons.add_circle_outline, size: 28),
+              icon: const Icon(Icons.add_circle_outline, size: 24),
               label: const Text(
                 'প্লেয়ার প্রোফাইল তৈরি করুন',
                 style: TextStyle(
@@ -319,9 +344,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(15),
-              decoration: const BoxDecoration(
-                color: Color(0xFF28A745),
+              decoration: BoxDecoration(
+                color: const Color(0xFF28A745),
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF28A745).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: const Icon(
                 Icons.sports_soccer,
@@ -342,12 +374,21 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  const SizedBox(height: 6),
+                  Text(
+                    player.name,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     'ID: ${player.playerId}',
                     style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
+                      color: Colors.white54,
+                      fontSize: 12,
                     ),
                   ),
                 ],
@@ -373,10 +414,18 @@ class _CommunityScreenState extends State<CommunityScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        gradient: LinearGradient(
+          colors: [
+            color.withOpacity(0.15),
+            color.withOpacity(0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: color.withOpacity(0.3),
+          width: 1.5,
         ),
       ),
       child: Column(
@@ -409,8 +458,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
       onTap: () {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('পোস্ট তৈরি করুন (Coming Soon)'),
-            backgroundColor: Color(0xFF0F3460),
+            content: Text('পোস্ট তৈরি করুন (শীঘ্রই আসছে)'),
+            backgroundColor: Color(0xFF28A745),
           ),
         );
       },
@@ -419,8 +468,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [
+              Color(0xFF16213E),
               Color(0xFF0F3460),
-              Color(0xFF1A5490),
             ],
           ),
           borderRadius: BorderRadius.circular(16),
@@ -437,8 +486,13 @@ class _CommunityScreenState extends State<CommunityScreen> {
             Container(
               width: 50,
               height: 50,
-              decoration: const BoxDecoration(
-                color: Color(0xFF28A745),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFF28A745),
+                    Color(0xFF20C997),
+                  ],
+                ),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -502,8 +556,13 @@ class _CommunityScreenState extends State<CommunityScreen> {
               Container(
                 width: 40,
                 height: 40,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF28A745),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFF28A745),
+                      Color(0xFF20C997),
+                    ],
+                  ),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -530,6 +589,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       time,
                       style: const TextStyle(
@@ -552,7 +612,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
             style: const TextStyle(
               color: Colors.white,
               fontSize: 15,
-              height: 1.4,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 16),
@@ -602,118 +662,102 @@ class _CommunityScreenState extends State<CommunityScreen> {
     );
   }
 
-  void _showCreatePlayerDialog(
+  // **** সংশোধিত ফাংশন: লোডিং ঠিক করার জন্য পরিবর্তন করা হয়েছে ****
+  Future<void> _showCreatePlayerDialog(
       BuildContext context,
       AuthProvider authProvider,
       PlayerProvider playerProvider,
-      ) {
+      ) async {
     String? selectedPosition;
 
-    showDialog(
+    // Step 1: পজিশন নির্বাচনের ডায়ালগটি দেখান এবং ফলাফল অপেক্ষা করুন
+    final bool? shouldCreate = await showDialog<bool>(
       context: context,
-      builder: (context) {
+      barrierDismissible: false,
+      builder: (dialogContext) {
         return StatefulBuilder(
-          builder: (context, setState) {
+          builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: const Color(0xFF16213E),
-              title: const Text(
-                'প্লেয়ার প্রোফাইল তৈরি করুন',
-                style: TextStyle(color: Colors.white),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
               ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
+              title: const Row(
                 children: [
-                  const Text(
-                    'আপনার খেলার পজিশন নির্বাচন করুন:',
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                  const SizedBox(height: 16),
-                  ...[
-                    'ফরওয়ার্ড',
-                    'মিডফিল্ডার',
-                    'ডিফেন্ডার',
-                    'গোলকিপার',
-                  ].map((position) {
-                    return RadioListTile<String>(
-                      title: Text(
-                        position,
-                        style: const TextStyle(color: Colors.white),
+                  Icon(Icons.sports_soccer, color: Color(0xFF28A745)),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'প্লেয়ার প্রোফাইল তৈরি করুন',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
                       ),
-                      value: position,
-                      groupValue: selectedPosition,
-                      activeColor: const Color(0xFF28A745),
-                      onChanged: (value) {
-                        setState(() {
-                          selectedPosition = value;
-                        });
-                      },
-                    );
-                  }).toList(),
+                    ),
+                  ),
                 ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'আপনার খেলার পজিশন নির্বাচন করুন:',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ...[
+                      'ফরওয়ার্ড',
+                      'মিডফিল্ডার',
+                      'ডিফেন্ডার',
+                      'গোলকিপার',
+                    ].map((position) {
+                      return RadioListTile<String>(
+                        title: Text(
+                          position,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        value: position,
+                        groupValue: selectedPosition,
+                        activeColor: const Color(0xFF28A745),
+                        onChanged: (value) {
+                          setDialogState(() {
+                            selectedPosition = value;
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ],
+                ),
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('বাতিল'),
+                  onPressed: () => Navigator.pop(dialogContext, false), // বাতিল করলে false রিটার্ন হবে
+                  child: const Text(
+                    'বাতিল',
+                    style: TextStyle(color: Colors.white70),
+                  ),
                 ),
-                TextButton(
+                ElevatedButton(
                   onPressed: selectedPosition == null
                       ? null
-                      : () async {
-                    Navigator.pop(context);
-
-                    showDialog(
-                      context: context,
-                      barrierDismissible: false,
-                      builder: (context) => const Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFF28A745),
-                        ),
-                      ),
-                    );
-
-                    bool success = await playerProvider.createPlayerProfile(
-                      user: authProvider.currentUser!,
-                      position: selectedPosition!,
-                    );
-
-
-                    if (mounted) {
-                      Navigator.pop(context);
-
-
-                      if (success) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('প্লেয়ার প্রোফাইল তৈরি সফল হয়েছে!'),
-                            backgroundColor: Colors.green,
-                            duration: Duration(seconds: 2),
-                          ),
-
-                        );
-                        await Future.delayed(const Duration(milliseconds: 500));
-                        if (mounted) {
-                          setState(() {
-                            _isCheckingPlayer = false;
-                          });
-                        }
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              playerProvider.errorMessage ??
-                                  'প্লেয়ার প্রোফাইল তৈরি ব্যর্থ',
-                            ),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                    }
+                      : () {
+                    // পজিশন নির্বাচন হলে, প্রথম ডায়ালগ বন্ধ করে true রিটার্ন করুন
+                    Navigator.pop(dialogContext, true);
                   },
-                  child: const Text(
-                    'তৈরি করুন',
-                    style: TextStyle(color: Color(0xFF28A745)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF28A745),
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
+                  child: const Text('তৈরি করুন'),
                 ),
               ],
             );
@@ -721,6 +765,55 @@ class _CommunityScreenState extends State<CommunityScreen> {
         );
       },
     );
+
+    // Step 2: যদি ইউজার 'তৈরি করুন' (true) নির্বাচন করে তবেই লোডিং দেখান এবং প্লেয়ার তৈরি করুন
+    if (shouldCreate == true && selectedPosition != null) {
+
+      // লোডিং ডায়ালগ দেখান (এটি মেইন কনটেক্সটে, তাই এটি ব্লক করবে)
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: CircularProgressIndicator(
+              color: Color(0xFF28A745),
+            ),
+          ),
+        );
+      }
+
+      // প্লেয়ার তৈরির প্রক্রিয়া
+      bool success = false;
+      if (authProvider.currentUser != null) {
+        success = await playerProvider.createPlayerProfile(
+          user: authProvider.currentUser!,
+          position: selectedPosition!,
+        );
+      }
+
+      // লোডিং ডায়ালগ বন্ধ করুন
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
+
+      // সফল হলে মূল স্ক্রিনটি রিফ্রেশ করুন (এটিই অনুপস্থিত ছিল)
+      if (success && mounted) {
+        await _checkPlayerProfile(); // এই ফাংশনটি _isCheckingPlayer কে false সেট করে দেবে
+      }
+
+      // মেসেজ দেখান
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              success
+                  ? 'প্লেয়ার প্রোফাইল তৈরি সফল হয়েছে!'
+                  : playerProvider.errorMessage ?? 'প্রোফাইল তৈরি ব্যর্থ',
+            ),
+            backgroundColor: success ? Colors.green : Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
-

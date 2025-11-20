@@ -148,18 +148,41 @@ class _PlayerScreenState extends State<PlayerScreen>
             backgroundColor: const Color(0xFF16213E),
             automaticallyImplyLeading: false,
             elevation: 0,
-            bottom: TabBar(
-              controller: _tabController,
-              indicatorColor: const Color(0xFF28A745),
-              indicatorWeight: 3,
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.white54,
-              tabs: const [
-                Tab(icon: Icon(Icons.info_outline), text: "তথ্য"),
-                Tab(icon: Icon(Icons.bar_chart_outlined), text: "পরিসংখ্যান"),
-                Tab(icon: Icon(Icons.sports_soccer_outlined), text: "ম্যাচ"),
-              ],
+
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(0), // ছোট উচ্চতা
+              child: Container(
+                height: 55,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: TabBar(
+                  controller: _tabController,
+                  indicatorColor: const Color(0xFF28A745),
+                  indicatorWeight: 3,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.white54,
+                  labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  unselectedLabelStyle: const TextStyle(fontSize: 13),
+                  tabs: const [
+                    Tab(
+                      iconMargin: EdgeInsets.only(bottom: 2),
+                      icon: Icon(Icons.info_outline, size: 25),
+                      text: "তথ্য",
+                    ),
+                    Tab(
+                      iconMargin: EdgeInsets.only(bottom: 2),
+                      icon: Icon(Icons.bar_chart_outlined, size: 25),
+                      text: "পরিসংখ্যান",
+                    ),
+                    Tab(
+                      iconMargin: EdgeInsets.only(bottom: 2),
+                      icon: Icon(Icons.sports_soccer_outlined, size: 25),
+                      text: "ম্যাচ",
+                    ),
+                  ],
+                ),
+              ),
             ),
+
           ),
 
           // Content
@@ -188,10 +211,12 @@ class _PlayerScreenState extends State<PlayerScreen>
           end: Alignment.bottomRight,
         ),
       ),
+
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // ✅ Player Avatar
+          SizedBox(height: 25,),
           Container(
             width: 110,
             height: 110,

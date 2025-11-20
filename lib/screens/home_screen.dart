@@ -1,5 +1,4 @@
 //
-//
 // import 'package:flutter/material.dart';
 // import 'package:intl/intl.dart';
 // import 'package:cloud_firestore/cloud_firestore.dart';
@@ -66,9 +65,9 @@
 //     try {
 //       final data = doc.data() as Map<String, dynamic>;
 //
-//       // Get team IDs
-//       final homeTeamId = data['homeTeamId'] ?? '';
-//       final awayTeamId = data['awayTeamId'] ?? '';
+//       // ✅ Support BOTH field naming conventions
+//       final homeTeamId = data['homeTeamId'] ?? data['teamAId'] ?? '';
+//       final awayTeamId = data['awayTeamId'] ?? data['teamBId'] ?? '';
 //
 //       debugPrint('🏆 Converting tournament match:');
 //       debugPrint('   Home Team ID: $homeTeamId');
@@ -89,8 +88,8 @@
 //         id: doc.id,
 //         teamA: homeTeam.name,  // ✅ Use actual team name
 //         teamB: awayTeam.name,  // ✅ Use actual team name
-//         scoreA: data['homeScore'] ?? 0,
-//         scoreB: data['awayScore'] ?? 0,
+//         scoreA: data['homeScore'] ?? data['scoreA'] ?? 0,
+//         scoreB: data['awayScore'] ?? data['scoreB'] ?? 0,
 //         time: _parseTimestamp(data['matchDate']),
 //         date: _parseTimestamp(data['matchDate']),
 //         status: data['status'] ?? 'upcoming',
@@ -514,6 +513,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:rxdart/rxdart.dart'; // ✅ rxdart ইম্পোর্ট করা হয়েছে
 import '../models/match_model.dart';
 import '../providers/match_provider.dart';
 import '../providers/team_provider.dart';
@@ -529,6 +529,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // Provider ইনস্ট্যান্সগুলো সাধারণত এখানে থাকে,
+  // তবে এটি StatefulWidget হওয়ায় আমরা এগুলোকে উপরেই রাখছি।
   final MatchProvider _matchProvider = MatchProvider();
   final TeamProvider _teamProvider = TeamProvider();
   DateTime? _selectedDate;
@@ -537,24 +539,26 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _selectedDate = DateTime.now();
+    // প্রাথমিকভাবে ডেটা লোড করার জন্য
     _loadData();
   }
 
+  // ✅ ডেটা লোড করার ফাংশন
   Future<void> _loadData() async {
     debugPrint('🔄 Loading data...');
 
-    // ✅ Load teams FIRST before loading matches
+    // Team ডেটা আগে লোড করুন, কারণ এটি Match-এর কনভার্সনের জন্য প্রয়োজনীয়
     await _teamProvider.fetchTeams();
     debugPrint('✅ Teams loaded: ${_teamProvider.teams.length}');
-    for (var team in _teamProvider.teams) {
-      debugPrint('   📋 Team: ${team.id} - ${team.name}');
-    }
 
-    await _matchProvider.fetchMatches();
-    debugPrint('✅ Data loaded');
+    // matchProvider-এ কোনো fetchMatches দরকার নেই, কারণ আমরা Stream ব্যবহার করছি
+    // তবে, যদি provider-এর ভিতরের কোনো ডেটা দরকার হয়, তবে কল করতে পারেন।
+    // এই মুহূর্তে, StreamBuilder সমস্ত ডেটা লোড করবে।
+
+    debugPrint('✅ Initial data loading finished');
   }
 
-  // Filter matches by selected date
+  // ডেট অনুযায়ী ম্যাচ ফিল্টার করার ফাংশন
   List<MatchModel> _filterMatchesByDate(List<MatchModel> matches) {
     if (_selectedDate == null) return matches;
 
@@ -572,34 +576,30 @@ class _HomeScreenState extends State<HomeScreen> {
     debugPrint('📅 Selected date: ${DateFormat('dd MMM yyyy').format(date)}');
   }
 
-  // ✅ Convert tournament match to MatchModel with actual team names
+  // ✅ Tournament ম্যাচকে MatchModel-এ রূপান্তর করার ফাংশন
   MatchModel? _tournamentMatchToMatchModel(DocumentSnapshot doc) {
     try {
       final data = doc.data() as Map<String, dynamic>;
 
-      // ✅ Support BOTH field naming conventions
       final homeTeamId = data['homeTeamId'] ?? data['teamAId'] ?? '';
       final awayTeamId = data['awayTeamId'] ?? data['teamBId'] ?? '';
-
-      debugPrint('🏆 Converting tournament match:');
-      debugPrint('   Home Team ID: $homeTeamId');
-      debugPrint('   Away Team ID: $awayTeamId');
 
       // ✅ Get actual team objects from provider
       final homeTeam = _teamProvider.getTeamById(homeTeamId);
       final awayTeam = _teamProvider.getTeamById(awayTeamId);
 
       if (homeTeam == null || awayTeam == null) {
-        debugPrint('   ❌ Teams not found: home=$homeTeam, away=$awayTeam');
+        // এই ক্ষেত্রে, কনসোল স্প্যামিং এড়াতে এই প্রিন্টগুলো বাদ দেওয়া ভালো
+        // debugPrint('   ❌ Teams not found: home=$homeTeamId, away=$awayTeamId');
         return null;
       }
 
-      debugPrint('   ✅ Teams found: ${homeTeam.name} vs ${awayTeam.name}');
+      // debugPrint('   ✅ Teams found: ${homeTeam.name} vs ${awayTeam.name}'); // রিয়েল-টাইমে প্রিন্ট এড়িয়ে যাওয়া ভালো
 
       return MatchModel(
         id: doc.id,
-        teamA: homeTeam.name,  // ✅ Use actual team name
-        teamB: awayTeam.name,  // ✅ Use actual team name
+        teamA: homeTeam.name,
+        teamB: awayTeam.name,
         scoreA: data['homeScore'] ?? data['scoreA'] ?? 0,
         scoreB: data['awayScore'] ?? data['scoreB'] ?? 0,
         time: _parseTimestamp(data['matchDate']),
@@ -626,6 +626,61 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     return DateTime.now();
   }
+
+  // **********************************************
+  // ** 🔥 সংশোধিত Combined Stream ফাংশন (rxdart) **
+  // **********************************************
+  Stream<List<MatchModel>> _getCombinedMatchesStream() {
+    // 1. Regular Matches Stream
+    final regularMatchesStream = FirebaseFirestore.instance
+        .collection('matches')
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        try {
+          return MatchModel.fromFirestore(doc);
+        } catch (e) {
+          debugPrint('❌ Error parsing regular match: $e');
+          return null;
+        }
+      }).whereType<MatchModel>().toList();
+    });
+
+    // 2. Tournament Matches Stream (Conversion লজিক এখানে কল হবে)
+    final tournamentMatchesStream = FirebaseFirestore.instance
+        .collection('tournament_matches')
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        try {
+          // _tournamentMatchToMatchModel ফাংশনটি কল করা হচ্ছে
+          final match = _tournamentMatchToMatchModel(doc);
+          return match;
+        } catch (e) {
+          debugPrint('❌ Error parsing tournament match: $e');
+          return null;
+        }
+      }).whereType<MatchModel>().toList();
+    });
+
+    // 3. CombineLatestStream ব্যবহার করে দুটি স্ট্রিমকে একত্রিত করুন
+    return CombineLatestStream.combine2(
+      regularMatchesStream,
+      tournamentMatchesStream,
+          (List<MatchModel> regularMatches, List<MatchModel> tournamentMatches) {
+        final allMatches = [...regularMatches, ...tournamentMatches];
+
+        // ✅ শুধুমাত্র একবার প্রিন্ট হবে যখন ডেটা আপডেট হবে
+        debugPrint('--- Combined Stream Update ---');
+        debugPrint('📊 Regular Matches: ${regularMatches.length}');
+        debugPrint('🏆 Tournament Matches: ${tournamentMatches.length}');
+        debugPrint('🎯 Total Combined: ${allMatches.length}');
+
+        return allMatches;
+      },
+    );
+  }
+  // **********************************************
 
   @override
   Widget build(BuildContext context) {
@@ -672,15 +727,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // Matches List
           Expanded(
+            // ✅ সংশোধিত StreamBuilder
             child: StreamBuilder<List<MatchModel>>(
               stream: _getCombinedMatchesStream(),
               builder: (context, snapshot) {
                 // Debug information
                 debugPrint('📊 Connection State: ${snapshot.connectionState}');
-                debugPrint('📊 Has Data: ${snapshot.hasData}');
-                debugPrint('📊 Data Length: ${snapshot.data?.length ?? 0}');
 
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting || snapshot.data == null) {
                   return const Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -742,69 +796,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 }
 
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.sports_soccer,
-                          color: Colors.white30,
-                          size: 80,
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'কোন ম্যাচ নেই',
-                          style: TextStyle(
-                            fontSize: 20,
-                            color: Colors.white70,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Firebase এ ডেটা যোগ করুন',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white54,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton.icon(
-                          onPressed: _loadData,
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Refresh করুন'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF00D9FF),
-                            foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
                 // Filter matches by selected date
                 List<MatchModel> allMatches = snapshot.data!;
                 List<MatchModel> filteredMatches =
                 _filterMatchesByDate(allMatches);
 
-                // Separate by status
-                List<MatchModel> liveMatches =
-                filteredMatches.where((m) => m.status == 'live').toList();
-                List<MatchModel> upcomingMatches = filteredMatches
-                    .where((m) => m.status == 'upcoming')
-                    .toList();
-                List<MatchModel> finishedMatches = filteredMatches
-                    .where((m) =>
-                m.status == 'finished' || m.status == 'completed')
-                    .toList();
+                // ... (বাকি কোড অপরিবর্তিত) ...
 
-                // Show empty state if no matches for selected date
                 if (filteredMatches.isEmpty) {
                   return Center(
                     child: Column(
@@ -836,6 +834,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   );
                 }
+
+                // Separate by status
+                List<MatchModel> liveMatches =
+                filteredMatches.where((m) => m.status == 'live').toList();
+                List<MatchModel> upcomingMatches = filteredMatches
+                    .where((m) => m.status == 'upcoming')
+                    .toList();
+                List<MatchModel> finishedMatches = filteredMatches
+                    .where((m) =>
+                m.status == 'finished' || m.status == 'completed')
+                    .toList();
+
 
                 // Build matches list grouped by status
                 return RefreshIndicator(
@@ -893,52 +903,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
-  }
-
-  // 🔥 Combined Stream: Fetches from both collections with team names
-  Stream<List<MatchModel>> _getCombinedMatchesStream() async* {
-    await for (final _ in Stream.periodic(const Duration(seconds: 1))) {
-      try {
-        final List<MatchModel> allMatches = [];
-
-        // 1. Fetch regular matches
-        final regularSnapshot =
-        await FirebaseFirestore.instance.collection('matches').get();
-
-        for (var doc in regularSnapshot.docs) {
-          try {
-            allMatches.add(MatchModel.fromFirestore(doc));
-          } catch (e) {
-            debugPrint('❌ Error parsing regular match: $e');
-          }
-        }
-
-        // 2. Fetch tournament matches (✅ WITH team name conversion)
-        final tournamentSnapshot = await FirebaseFirestore.instance
-            .collection('tournament_matches')
-            .get();
-
-        for (var doc in tournamentSnapshot.docs) {
-          try {
-            final match = _tournamentMatchToMatchModel(doc);
-            if (match != null) {
-              allMatches.add(match);
-            }
-          } catch (e) {
-            debugPrint('❌ Error parsing tournament match: $e');
-          }
-        }
-
-        debugPrint('📊 Regular Matches: ${regularSnapshot.docs.length}');
-        debugPrint('🏆 Tournament Matches: ${tournamentSnapshot.docs.length}');
-        debugPrint('🎯 Total Combined: ${allMatches.length}');
-
-        yield allMatches;
-      } catch (e) {
-        debugPrint('❌ Error in combined stream: $e');
-        yield [];
-      }
-    }
   }
 
   Widget _buildSectionHeader({

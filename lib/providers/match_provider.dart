@@ -115,4 +115,18 @@ class MatchProvider extends ChangeNotifier {
       debugPrint('❌ Error updating match status: $e');
     }
   }
+  // Match শেষ করার method
+  Future<void> finishMatch(String matchId) async {
+    try {
+      await _firestore.collection('matches').doc(matchId).update({
+        'status': 'finished',
+      });
+      debugPrint('✅ Match finished - Rankings will be auto-updated');
+      await fetchMatches();
+    } catch (e) {
+      debugPrint('❌ Error finishing match: $e');
+      _error = 'Error finishing match: $e';
+      notifyListeners();
+    }
+  }
 }

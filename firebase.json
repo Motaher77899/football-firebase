@@ -1,1 +1,41 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"football-firebase-3e1e0","appId":"1:27734595837:android:7f77f952c23a71aa99c694","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"football-firebase-3e1e0","configurations":{"android":"1:27734595837:android:7f77f952c23a71aa99c694","ios":"1:27734595837:ios:d852e723456731a599c694","web":"1:27734595837:web:3fb9215856a4435099c694"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "football-firebase-3e1e0",
+          "appId": "1:27734595837:android:7f77f952c23a71aa99c694",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "football-firebase-3e1e0",
+          "configurations": {
+            "android": "1:27734595837:android:7f77f952c23a71aa99c694",
+            "ios": "1:27734595837:ios:d852e723456731a599c694",
+            "web": "1:27734595837:web:3fb9215856a4435099c694"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "disallowLegacyRuntimeConfig": true,
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run lint",
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    }
+  ]
+}
