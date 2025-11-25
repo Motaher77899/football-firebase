@@ -93,19 +93,24 @@ class MatchModel {
 }
 
 // Timeline Event Model
+// Timeline Event Model
 class MatchEvent {
   final String type; // goal, card, substitution
   final String team; // teamA or teamB
   final String playerName;
+  final String playerId;  // ✅ ADDED - Critical for ranking
   final int minute;
   final String? details; // yellow_card, red_card, player_out, player_in
+  final String? assistPlayerId; // ✅ ADDED - For assist tracking
 
   MatchEvent({
     required this.type,
     required this.team,
     required this.playerName,
+    required this.playerId,  // ✅ ADDED
     required this.minute,
     this.details,
+    this.assistPlayerId,  // ✅ ADDED
   });
 
   factory MatchEvent.fromMap(Map<String, dynamic> map) {
@@ -113,8 +118,10 @@ class MatchEvent {
       type: map['type'] ?? '',
       team: map['team'] ?? '',
       playerName: map['playerName'] ?? '',
+      playerId: map['playerId'] ?? '',  // ✅ ADDED
       minute: map['minute'] ?? 0,
       details: map['details'],
+      assistPlayerId: map['assistPlayerId'],  // ✅ ADDED
     );
   }
 
@@ -123,8 +130,10 @@ class MatchEvent {
       'type': type,
       'team': team,
       'playerName': playerName,
+      'playerId': playerId,  // ✅ ADDED
       'minute': minute,
       'details': details,
+      'assistPlayerId': assistPlayerId,  // ✅ ADDED
     };
   }
 }

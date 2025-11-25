@@ -4,8 +4,8 @@ import 'package:intl/intl.dart';
 
 // Models
 import '../models/team_model.dart';
-import '../models/tournament_match_model.dart';
-import '../models/tournament_model.dart' hide TournamentMatch;
+import '../models/tournament/tournament_match_model.dart';
+import '../models/tournament/tournament_model.dart' hide TournamentMatch;
 
 import '../models/match_model.dart';
 

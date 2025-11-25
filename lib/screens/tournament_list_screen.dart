@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:football_user_app/screens/tournament_%20details_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../models/tournament.dart';
-import '../models/tournament_model.dart';
+import '../models/tournament/tournament_model.dart';
 import '../providers/tournament_provider.dart';
 
 

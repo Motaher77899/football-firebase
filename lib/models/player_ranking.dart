@@ -1,88 +1,54 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 class PlayerRanking {
   final String playerId;
   final String playerName;
-  final String? playerPhoto;
-  final String teamId;
-  final String teamName;
+  final String playerPhoto;
   final String position;
+  final String upazila;
+  final int points;
+  final int matchesPlayed;
   final int goals;
   final int assists;
   final int cleanSheets;
   final int yellowCards;
   final int redCards;
-  final int totalPoints;
-  final int matchesPlayed;
-  final DateTime lastUpdated;
+  final DateTime? updatedAt;
 
   PlayerRanking({
     required this.playerId,
     required this.playerName,
-    this.playerPhoto,
-    required this.teamId,
-    required this.teamName,
-    required this.position,
+    this.playerPhoto = '',
+    this.position = '',
+    this.upazila = '',
+    required this.points,
+    required this.matchesPlayed,
     required this.goals,
     required this.assists,
     required this.cleanSheets,
-    required this.yellowCards,
-    required this.redCards,
-    required this.totalPoints,
-    required this.matchesPlayed,
-    required this.lastUpdated,
+    this.yellowCards = 0,
+    this.redCards = 0,
+    this.updatedAt,
   });
 
-  factory PlayerRanking.fromMap(Map<String, dynamic> map, String id) {
+  factory PlayerRanking.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
     return PlayerRanking(
-      playerId: id,
-      playerName: map['playerName'] ?? '',
-      playerPhoto: map['playerPhoto'],
-      teamId: map['teamId'] ?? '',
-      teamName: map['teamName'] ?? '',
-      position: map['position'] ?? '',
-      goals: map['goals'] ?? 0,
-      assists: map['assists'] ?? 0,
-      cleanSheets: map['cleanSheets'] ?? 0,
-      yellowCards: map['yellowCards'] ?? 0,
-      redCards: map['redCards'] ?? 0,
-      totalPoints: map['totalPoints'] ?? 0,
-      matchesPlayed: map['matchesPlayed'] ?? 0,
-      lastUpdated: map['lastUpdated'] != null
-          ? (map['lastUpdated'] as Timestamp).toDate()
-          : DateTime.now(),
+      playerId: doc.id,
+      playerName: data['playerName'] ?? '',
+      playerPhoto: data['playerPhoto'] ?? '',
+      position: data['position'] ?? '',
+      upazila: data['upazila'] ?? '',
+      points: data['points'] ?? 0,
+      matchesPlayed: data['matchesPlayed'] ?? 0,
+      goals: data['goals'] ?? 0,
+      assists: data['assists'] ?? 0,
+      cleanSheets: data['cleanSheets'] ?? 0,
+      yellowCards: data['yellowCards'] ?? 0,
+      redCards: data['redCards'] ?? 0,
+      updatedAt: data['updatedAt'] != null
+          ? (data['updatedAt'] as Timestamp).toDate()
+          : null,
     );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'playerName': playerName,
-      'playerPhoto': playerPhoto,
-      'teamId': teamId,
-      'teamName': teamName,
-      'position': position,
-      'goals': goals,
-      'assists': assists,
-      'cleanSheets': cleanSheets,
-      'yellowCards': yellowCards,
-      'redCards': redCards,
-      'totalPoints': totalPoints,
-      'matchesPlayed': matchesPlayed,
-      'lastUpdated': Timestamp.fromDate(lastUpdated),
-    };
-  }
-
-  // Calculate points based on stats
-  static int calculatePoints({
-    required int goals,
-    required int assists,
-    required int cleanSheets,
-    required int yellowCards,
-    required int redCards,
-  }) {
-    return (goals * 3) +
-        (assists * 2) +
-        (cleanSheets * 1) -
-        (yellowCards * 1) -
-        (redCards * 3);
   }
 }

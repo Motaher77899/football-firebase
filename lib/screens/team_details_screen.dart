@@ -3,13 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:football_user_app/screens/player_screen.dart';
-import 'package:football_user_app/widgets/player_card.dart';
-
 import '../models/team_model.dart';
 import '../models/match_model.dart';
 import '../models/player_model.dart';
-import '../providers/player_provider.dart';
-import 'my_player_profile_screen.dart';
+
 
 class TeamDetailsScreen extends StatefulWidget {
   final TeamModel team;

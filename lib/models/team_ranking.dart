@@ -1,8 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 class TeamRanking {
   final String teamId;
   final String teamName;
-  final String? teamLogo;
+  final String teamLogo;
+  final String upazila;
+  final String district;
+  final int points;
   final int matchesPlayed;
   final int wins;
   final int draws;
@@ -10,15 +14,17 @@ class TeamRanking {
   final int goalsFor;
   final int goalsAgainst;
   final int goalDifference;
-  final int points;
   final int yellowCards;
   final int redCards;
-  final DateTime lastUpdated;
+  final DateTime? updatedAt;
 
   TeamRanking({
     required this.teamId,
     required this.teamName,
-    this.teamLogo,
+    this.teamLogo = '',
+    this.upazila = '',
+    this.district = '',
+    required this.points,
     required this.matchesPlayed,
     required this.wins,
     required this.draws,
@@ -26,46 +32,32 @@ class TeamRanking {
     required this.goalsFor,
     required this.goalsAgainst,
     required this.goalDifference,
-    required this.points,
     this.yellowCards = 0,
     this.redCards = 0,
-    required this.lastUpdated,
+    this.updatedAt,
   });
 
-  factory TeamRanking.fromMap(Map<String, dynamic> map, String id) {
+  factory TeamRanking.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
     return TeamRanking(
-      teamId: id,
-      teamName: map['teamName'] ?? '',
-      teamLogo: map['teamLogo'],
-      matchesPlayed: map['matchesPlayed'] ?? 0,
-      wins: map['wins'] ?? 0,
-      draws: map['draws'] ?? 0,
-      losses: map['losses'] ?? 0,
-      goalsFor: map['goalsFor'] ?? 0,
-      goalsAgainst: map['goalsAgainst'] ?? 0,
-      goalDifference: map['goalDifference'] ?? 0,
-      points: map['points'] ?? 0,
-      yellowCards: map['yellowCards'] ?? 0,
-      redCards: map['redCards'] ?? 0,
-      lastUpdated: (map['lastUpdated'] as Timestamp).toDate(),
+      teamId: doc.id,
+      teamName: data['teamName'] ?? '',
+      teamLogo: data['teamLogo'] ?? '',
+      upazila: data['upazila'] ?? '',
+      district: data['district'] ?? '',
+      points: data['points'] ?? 0,
+      matchesPlayed: data['matchesPlayed'] ?? 0,
+      wins: data['wins'] ?? 0,
+      draws: data['draws'] ?? 0,
+      losses: data['losses'] ?? 0,
+      goalsFor: data['goalsFor'] ?? 0,
+      goalsAgainst: data['goalsAgainst'] ?? 0,
+      goalDifference: data['goalDifference'] ?? 0,
+      yellowCards: data['yellowCards'] ?? 0,
+      redCards: data['redCards'] ?? 0,
+      updatedAt: data['updatedAt'] != null
+          ? (data['updatedAt'] as Timestamp).toDate()
+          : null,
     );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'teamName': teamName,
-      'teamLogo': teamLogo,
-      'matchesPlayed': matchesPlayed,
-      'wins': wins,
-      'draws': draws,
-      'losses': losses,
-      'goalsFor': goalsFor,
-      'goalsAgainst': goalsAgainst,
-      'goalDifference': goalDifference,
-      'points': points,
-      'yellowCards': yellowCards,
-      'redCards': redCards,
-      'lastUpdated': Timestamp.fromDate(lastUpdated),
-    };
   }
 }

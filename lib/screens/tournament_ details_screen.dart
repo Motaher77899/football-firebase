@@ -3066,24 +3066,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
-
-// Models
-import '../models/team_model.dart';
-import '../models/tournament.dart';
-import '../models/tournament_model.dart';
-
-import '../models/match_model.dart';
-
-// Providers
+import '../models/tournament/tournament_model.dart';
 import '../providers/team_provider.dart';
-
-// Widgets
-import '../widgets/tournament_match_card.dart';
-
-// Screens
 import '../widgets/tournament_tabs_widget.dart';
-import 'match_details_screen.dart';
+
 
 // ============================================================================
 // MAIN TOURNAMENT DETAILS SCREEN
