@@ -1,5 +1,4 @@
 
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -156,7 +155,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   comments: 23,
                 ),
 
-                const SizedBox(height: 80), // Bottom padding
+                const SizedBox(height: 80),
               ],
             ),
           );
@@ -278,7 +277,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
             width: double.infinity,
             height: 56,
             child: ElevatedButton.icon(
-              // সংশোধিত কল: now it's async
               onPressed: () async => await _showCreatePlayerDialog(
                 context,
                 authProvider,
@@ -307,6 +305,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
     );
   }
 
+  // ✅ Player Profile Card with Photo
   Widget _buildPlayerProfileCard(
       BuildContext context,
       PlayerProvider playerProvider,
@@ -342,11 +341,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
         ),
         child: Row(
           children: [
+            // ✅ Player Photo
             Container(
-              padding: const EdgeInsets.all(15),
+              width: 60,
+              height: 60,
               decoration: BoxDecoration(
-                color: const Color(0xFF28A745),
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.3),
+                  width: 3,
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: const Color(0xFF28A745).withOpacity(0.3),
@@ -355,10 +359,64 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.sports_soccer,
-                color: Colors.white,
-                size: 30,
+              child: ClipOval(
+                child: (player.profilePhotoUrl != null && player.profilePhotoUrl!.isNotEmpty)
+                    ? Image.network(
+                  player.profilePhotoUrl!,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF28A745), Color(0xFF20C997)],
+                        ),
+                      ),
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF28A745), Color(0xFF20C997)],
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          player.name.isNotEmpty ? player.name[0].toUpperCase() : 'P',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                )
+                    : Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF28A745), Color(0xFF20C997)],
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      player.name.isNotEmpty ? player.name[0].toUpperCase() : 'P',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 16),
@@ -662,7 +720,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
     );
   }
 
-  // **** সংশোধিত ফাংশন: লোডিং ঠিক করার জন্য পরিবর্তন করা হয়েছে ****
   Future<void> _showCreatePlayerDialog(
       BuildContext context,
       AuthProvider authProvider,
@@ -670,7 +727,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
       ) async {
     String? selectedPosition;
 
-    // Step 1: পজিশন নির্বাচনের ডায়ালগটি দেখান এবং ফলাফল অপেক্ষা করুন
     final bool? shouldCreate = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -736,7 +792,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(dialogContext, false), // বাতিল করলে false রিটার্ন হবে
+                  onPressed: () => Navigator.pop(dialogContext, false),
                   child: const Text(
                     'বাতিল',
                     style: TextStyle(color: Colors.white70),
@@ -746,7 +802,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   onPressed: selectedPosition == null
                       ? null
                       : () {
-                    // পজিশন নির্বাচন হলে, প্রথম ডায়ালগ বন্ধ করে true রিটার্ন করুন
                     Navigator.pop(dialogContext, true);
                   },
                   style: ElevatedButton.styleFrom(
@@ -766,10 +821,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
       },
     );
 
-    // Step 2: যদি ইউজার 'তৈরি করুন' (true) নির্বাচন করে তবেই লোডিং দেখান এবং প্লেয়ার তৈরি করুন
     if (shouldCreate == true && selectedPosition != null) {
-
-      // লোডিং ডায়ালগ দেখান (এটি মেইন কনটেক্সটে, তাই এটি ব্লক করবে)
       if (mounted) {
         showDialog(
           context: context,
@@ -782,7 +834,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
         );
       }
 
-      // প্লেয়ার তৈরির প্রক্রিয়া
       bool success = false;
       if (authProvider.currentUser != null) {
         success = await playerProvider.createPlayerProfile(
@@ -791,24 +842,21 @@ class _CommunityScreenState extends State<CommunityScreen> {
         );
       }
 
-      // লোডিং ডায়ালগ বন্ধ করুন
       if (context.mounted) {
         Navigator.pop(context);
       }
 
-      // সফল হলে মূল স্ক্রিনটি রিফ্রেশ করুন (এটিই অনুপস্থিত ছিল)
       if (success && mounted) {
-        await _checkPlayerProfile(); // এই ফাংশনটি _isCheckingPlayer কে false সেট করে দেবে
+        await _checkPlayerProfile();
       }
 
-      // মেসেজ দেখান
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               success
-                  ? 'প্লেয়ার প্রোফাইল তৈরি সফল হয়েছে!'
-                  : playerProvider.errorMessage ?? 'প্রোফাইল তৈরি ব্যর্থ',
+                  ? '✅ প্লেয়ার প্রোফাইল তৈরি সফল হয়েছে!'
+                  : playerProvider.errorMessage ?? '❌ প্রোফাইল তৈরি ব্যর্থ',
             ),
             backgroundColor: success ? Colors.green : Colors.red,
           ),

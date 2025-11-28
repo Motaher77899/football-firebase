@@ -5,6 +5,7 @@ import '../models/tournament/tournament_match_model.dart';
 import '../models/team_model.dart';
 import '../providers/team_provider.dart';
 
+
 class TournamentMatchCard extends StatelessWidget {
   final TournamentMatch match;
   final TeamProvider teamProvider;

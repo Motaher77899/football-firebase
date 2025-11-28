@@ -1,4 +1,5 @@
 
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -8,7 +9,7 @@ import 'my_profile_screen.dart';
 import 'team_list_screen.dart';
 import 'all_players_screen.dart';
 import 'tournament_list_screen.dart';
-import 'rankings_screen.dart'; // Add this import
+import 'rankings_screen.dart';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({Key? key}) : super(key: key);
@@ -21,7 +22,7 @@ class MoreScreen extends StatelessWidget {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Profile Section
+              // ✅ Profile Section with Photo
               Consumer<AuthProvider>(
                 builder: (context, authProvider, child) {
                   final user = authProvider.currentUser;
@@ -39,32 +40,93 @@ class MoreScreen extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        // Avatar
+                        // ✅ Avatar with Photo
                         Container(
                           width: 80,
                           height: 80,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            gradient: const LinearGradient(
-                              colors: [
-                                Color(0xFF0F3460),
-                                Color(0xFF1A5490),
-                              ],
-                            ),
                             border: Border.all(
                               color: Colors.white,
                               width: 3,
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.3),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                          child: Center(
-                            child: Text(
-                              user?.fullName.isNotEmpty == true
-                                  ? user!.fullName[0].toUpperCase()
-                                  : 'U',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 36,
-                                fontWeight: FontWeight.bold,
+                          child: ClipOval(
+                            child: (user?.profilePhotoUrl != null && user!.profilePhotoUrl!.isNotEmpty)
+                                ? Image.network(
+                              user.profilePhotoUrl!,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  decoration: const BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Color(0xFF0F3460),
+                                        Color(0xFF1A5490),
+                                      ],
+                                    ),
+                                  ),
+                                  child: const Center(
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  decoration: const BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Color(0xFF0F3460),
+                                        Color(0xFF1A5490),
+                                      ],
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      user.fullName.isNotEmpty
+                                          ? user.fullName[0].toUpperCase()
+                                          : 'U',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 36,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            )
+                                : Container(
+                              decoration: const BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Color(0xFF0F3460),
+                                    Color(0xFF1A5490),
+                                  ],
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  user?.fullName.isNotEmpty == true
+                                      ? user!.fullName[0].toUpperCase()
+                                      : 'U',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 36,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ),
                           ),

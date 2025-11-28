@@ -1,13 +1,21 @@
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:rxdart/rxdart.dart'; // ✅ rxdart ইম্পোর্ট করা হয়েছে
+import 'package:provider/provider.dart';  // ✅ Add this import
+import 'package:rxdart/rxdart.dart';
+
+// Models
 import '../models/match_model.dart';
+
+// Providers
 import '../providers/match_provider.dart';
 import '../providers/team_provider.dart';
+
+// Widgets
 import '../widgets/match_card.dart';
 import '../widgets/date_scroll_bar.dart';
+
+// Screens
 import 'match_details_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -18,36 +26,63 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Provider ইনস্ট্যান্সগুলো সাধারণত এখানে থাকে,
-  // তবে এটি StatefulWidget হওয়ায় আমরা এগুলোকে উপরেই রাখছি।
-  final MatchProvider _matchProvider = MatchProvider();
-  final TeamProvider _teamProvider = TeamProvider();
   DateTime? _selectedDate;
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
     _selectedDate = DateTime.now();
-    // প্রাথমিকভাবে ডেটা লোড করার জন্য
-    _loadData();
+
+    // ✅ Load data after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
   }
 
-  // ✅ ডেটা লোড করার ফাংশন
+  // ✅ Fixed: Load data using provider from context
   Future<void> _loadData() async {
-    debugPrint('🔄 Loading data...');
+    if (!mounted) return;
 
-    // Team ডেটা আগে লোড করুন, কারণ এটি Match-এর কনভার্সনের জন্য প্রয়োজনীয়
-    await _teamProvider.fetchTeams();
-    debugPrint('✅ Teams loaded: ${_teamProvider.teams.length}');
+    debugPrint('═══════════════════════════════════');
+    debugPrint('🔄 Starting data load...');
+    debugPrint('═══════════════════════════════════');
 
-    // matchProvider-এ কোনো fetchMatches দরকার নেই, কারণ আমরা Stream ব্যবহার করছি
-    // তবে, যদি provider-এর ভিতরের কোনো ডেটা দরকার হয়, তবে কল করতে পারেন।
-    // এই মুহূর্তে, StreamBuilder সমস্ত ডেটা লোড করবে।
+    try {
+      // ✅ Get TeamProvider from context (same instance from MultiProvider)
+      final teamProvider = Provider.of<TeamProvider>(context, listen: false);
 
-    debugPrint('✅ Initial data loading finished');
+      // ✅ Load teams
+      await teamProvider.fetchTeams();
+
+      debugPrint('✅ Teams loaded: ${teamProvider.teams.length}');
+
+      if (teamProvider.teams.isEmpty) {
+        debugPrint('⚠️ WARNING: No teams loaded!');
+      } else {
+        debugPrint('📋 Available teams:');
+        for (var team in teamProvider.teams) {
+          debugPrint('   - ${team.id}: ${team.name}');
+        }
+      }
+
+      debugPrint('═══════════════════════════════════');
+      debugPrint('✅ Data loading complete!');
+      debugPrint('═══════════════════════════════════');
+
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('═══════════════════════════════════');
+      debugPrint('❌ Error loading data: $e');
+      debugPrint('═══════════════════════════════════');
+    }
   }
 
-  // ডেট অনুযায়ী ম্যাচ ফিল্টার করার ফাংশন
+  // Filter matches by date
   List<MatchModel> _filterMatchesByDate(List<MatchModel> matches) {
     if (_selectedDate == null) return matches;
 
@@ -65,34 +100,47 @@ class _HomeScreenState extends State<HomeScreen> {
     debugPrint('📅 Selected date: ${DateFormat('dd MMM yyyy').format(date)}');
   }
 
-  // ✅ Tournament ম্যাচকে MatchModel-এ রূপান্তর করার ফাংশন
-  MatchModel? _tournamentMatchToMatchModel(DocumentSnapshot doc) {
+  // ✅ Fixed: Tournament Match to Match Model Conversion
+  MatchModel? _tournamentMatchToMatchModel(
+      DocumentSnapshot doc,
+      TeamProvider teamProvider,  // ✅ Pass provider as parameter
+      ) {
     try {
       final data = doc.data() as Map<String, dynamic>;
 
-      final homeTeamId = data['homeTeamId'] ?? data['teamAId'] ?? '';
-      final awayTeamId = data['awayTeamId'] ?? data['teamBId'] ?? '';
+      final homeTeamId = data['teamAId'] ?? data['homeTeamId'] ?? '';
+      final awayTeamId = data['teamBId'] ?? data['awayTeamId'] ?? '';
 
-      // ✅ Get actual team objects from provider
-      final homeTeam = _teamProvider.getTeamById(homeTeamId);
-      final awayTeam = _teamProvider.getTeamById(awayTeamId);
+      // ✅ Use passed provider
+      final homeTeam = teamProvider.getTeamById(homeTeamId);
+      final awayTeam = teamProvider.getTeamById(awayTeamId);
 
-      if (homeTeam == null || awayTeam == null) {
-        // এই ক্ষেত্রে, কনসোল স্প্যামিং এড়াতে এই প্রিন্টগুলো বাদ দেওয়া ভালো
-        // debugPrint('   ❌ Teams not found: home=$homeTeamId, away=$awayTeamId');
+      if (homeTeam == null) {
+        debugPrint('   ❌ Home team "$homeTeamId" NOT FOUND');
         return null;
       }
 
-      // debugPrint('   ✅ Teams found: ${homeTeam.name} vs ${awayTeam.name}'); // রিয়েল-টাইমে প্রিন্ট এড়িয়ে যাওয়া ভালো
+      if (awayTeam == null) {
+        debugPrint('   ❌ Away team "$awayTeamId" NOT FOUND');
+        return null;
+      }
+
+      // Parse date
+      DateTime matchDate = DateTime.now();
+      if (data['matchDate'] != null) {
+        matchDate = _parseTimestampFixed(data['matchDate']);
+      } else if (data['rankingUpdatedAt'] != null) {
+        matchDate = _parseTimestampFixed(data['rankingUpdatedAt']);
+      }
 
       return MatchModel(
         id: doc.id,
         teamA: homeTeam.name,
         teamB: awayTeam.name,
-        scoreA: data['homeScore'] ?? data['scoreA'] ?? 0,
-        scoreB: data['awayScore'] ?? data['scoreB'] ?? 0,
-        time: _parseTimestamp(data['matchDate']),
-        date: _parseTimestamp(data['matchDate']),
+        scoreA: data['scoreA'] ?? 0,
+        scoreB: data['scoreB'] ?? 0,
+        time: matchDate,
+        date: matchDate,
         status: data['status'] ?? 'upcoming',
         tournament: data['tournamentId'] ?? '',
         venue: data['venue'] ?? '',
@@ -103,9 +151,21 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  DateTime _parseTimestamp(dynamic value) {
+  DateTime _parseTimestampFixed(dynamic value) {
     if (value == null) return DateTime.now();
-    if (value is Timestamp) return value.toDate();
+
+    if (value is Timestamp) {
+      final utcDate = value.toDate();
+      return DateTime(
+        utcDate.year,
+        utcDate.month,
+        utcDate.day,
+        utcDate.hour,
+        utcDate.minute,
+        utcDate.second,
+      );
+    }
+
     if (value is String) {
       try {
         return DateTime.parse(value);
@@ -113,14 +173,12 @@ class _HomeScreenState extends State<HomeScreen> {
         return DateTime.now();
       }
     }
+
     return DateTime.now();
   }
 
-  // **********************************************
-  // ** 🔥 সংশোধিত Combined Stream ফাংশন (rxdart) **
-  // **********************************************
-  Stream<List<MatchModel>> _getCombinedMatchesStream() {
-    // 1. Regular Matches Stream
+  // ✅ Fixed: Combined Stream with proper provider usage
+  Stream<List<MatchModel>> _getCombinedMatchesStream(TeamProvider teamProvider) {
     final regularMatchesStream = FirebaseFirestore.instance
         .collection('matches')
         .snapshots()
@@ -135,15 +193,14 @@ class _HomeScreenState extends State<HomeScreen> {
       }).whereType<MatchModel>().toList();
     });
 
-    // 2. Tournament Matches Stream (Conversion লজিক এখানে কল হবে)
     final tournamentMatchesStream = FirebaseFirestore.instance
         .collection('tournament_matches')
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {
         try {
-          // _tournamentMatchToMatchModel ফাংশনটি কল করা হচ্ছে
-          final match = _tournamentMatchToMatchModel(doc);
+          // ✅ Pass teamProvider to conversion function
+          final match = _tournamentMatchToMatchModel(doc, teamProvider);
           return match;
         } catch (e) {
           debugPrint('❌ Error parsing tournament match: $e');
@@ -152,27 +209,21 @@ class _HomeScreenState extends State<HomeScreen> {
       }).whereType<MatchModel>().toList();
     });
 
-    // 3. CombineLatestStream ব্যবহার করে দুটি স্ট্রিমকে একত্রিত করুন
     return CombineLatestStream.combine2(
       regularMatchesStream,
       tournamentMatchesStream,
           (List<MatchModel> regularMatches, List<MatchModel> tournamentMatches) {
         final allMatches = [...regularMatches, ...tournamentMatches];
-
-        // ✅ শুধুমাত্র একবার প্রিন্ট হবে যখন ডেটা আপডেট হবে
-        debugPrint('--- Combined Stream Update ---');
-        debugPrint('📊 Regular Matches: ${regularMatches.length}');
-        debugPrint('🏆 Tournament Matches: ${tournamentMatches.length}');
-        debugPrint('🎯 Total Combined: ${allMatches.length}');
-
         return allMatches;
       },
     );
   }
-  // **********************************************
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Get TeamProvider from context
+    final teamProvider = Provider.of<TeamProvider>(context);
+
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A2E),
       appBar: AppBar(
@@ -216,30 +267,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // Matches List
           Expanded(
-            // ✅ সংশোধিত StreamBuilder
-            child: StreamBuilder<List<MatchModel>>(
-              stream: _getCombinedMatchesStream(),
+            child: !_isInitialized
+                ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(color: Color(0xFF00D9FF)),
+                  SizedBox(height: 16),
+                  Text(
+                    'ডেটা লোড হচ্ছে...',
+                    style: TextStyle(color: Colors.white70, fontSize: 16),
+                  ),
+                ],
+              ),
+            )
+                : StreamBuilder<List<MatchModel>>(
+              stream: _getCombinedMatchesStream(teamProvider),
               builder: (context, snapshot) {
-                // Debug information
-                debugPrint('📊 Connection State: ${snapshot.connectionState}');
-
-                if (snapshot.connectionState == ConnectionState.waiting || snapshot.data == null) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(
-                          color: Color(0xFF00D9FF),
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          'ডেটা লোড হচ্ছে...',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF00D9FF),
                     ),
                   );
                 }
@@ -274,10 +322,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF00D9FF),
                             foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
-                            ),
                           ),
                         ),
                       ],
@@ -285,12 +329,33 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 }
 
-                // Filter matches by selected date
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.event_busy,
+                          color: Colors.white30,
+                          size: 80,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'কোন ম্যাচ নেই',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.white70,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
                 List<MatchModel> allMatches = snapshot.data!;
                 List<MatchModel> filteredMatches =
                 _filterMatchesByDate(allMatches);
-
-                // ... (বাকি কোড অপরিবর্তিত) ...
 
                 if (filteredMatches.isEmpty) {
                   return Center(
@@ -335,8 +400,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 m.status == 'finished' || m.status == 'completed')
                     .toList();
 
-
-                // Build matches list grouped by status
                 return RefreshIndicator(
                   onRefresh: _loadData,
                   color: const Color(0xFF00D9FF),
@@ -344,7 +407,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
-                      // Live Matches Section
                       if (liveMatches.isNotEmpty) ...[
                         _buildSectionHeader(
                           icon: Icons.play_circle_filled,
@@ -353,11 +415,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: Colors.red,
                         ),
                         const SizedBox(height: 12),
-                        ...liveMatches.map((match) => _buildMatchCard(match)),
+                        ...liveMatches.map((match) => _buildMatchCard(match, teamProvider)),
                         const SizedBox(height: 24),
                       ],
-
-                      // Upcoming Matches Section
                       if (upcomingMatches.isNotEmpty) ...[
                         _buildSectionHeader(
                           icon: Icons.schedule,
@@ -366,12 +426,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: Colors.orange,
                         ),
                         const SizedBox(height: 12),
-                        ...upcomingMatches
-                            .map((match) => _buildMatchCard(match)),
+                        ...upcomingMatches.map((match) => _buildMatchCard(match, teamProvider)),
                         const SizedBox(height: 24),
                       ],
-
-                      // Finished Matches Section
                       if (finishedMatches.isNotEmpty) ...[
                         _buildSectionHeader(
                           icon: Icons.check_circle,
@@ -380,8 +437,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           color: Colors.green,
                         ),
                         const SizedBox(height: 12),
-                        ...finishedMatches
-                            .map((match) => _buildMatchCard(match)),
+                        ...finishedMatches.map((match) => _buildMatchCard(match, teamProvider)),
                       ],
                     ],
                   ),
@@ -418,11 +474,7 @@ class _HomeScreenState extends State<HomeScreen> {
               color: color.withOpacity(0.2),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 20,
-            ),
+            child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(width: 12),
           Text(
@@ -454,7 +506,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildMatchCard(MatchModel match) {
+  Widget _buildMatchCard(MatchModel match, TeamProvider teamProvider) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -462,14 +514,14 @@ class _HomeScreenState extends State<HomeScreen> {
           MaterialPageRoute(
             builder: (context) => MatchDetailsScreen(
               match: match,
-              teamProvider: _teamProvider,
+              teamProvider: teamProvider,
             ),
           ),
         );
       },
       child: MatchCard(
         match: match,
-        teamProvider: _teamProvider,
+        teamProvider: teamProvider,
       ),
     );
   }

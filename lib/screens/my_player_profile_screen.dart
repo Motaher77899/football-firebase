@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -200,17 +199,12 @@ class _MyPlayerProfileScreenState extends State<MyPlayerProfileScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          // ✅ Player Avatar with Photo
           Container(
             width: 100,
             height: 100,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [
-                  Color(0xFF28A745),
-                  Color(0xFF20C997),
-                ],
-              ),
               border: Border.all(
                 color: Colors.white.withOpacity(0.5),
                 width: 4,
@@ -223,13 +217,67 @@ class _MyPlayerProfileScreenState extends State<MyPlayerProfileScreen>
                 ),
               ],
             ),
-            child: Center(
-              child: Text(
-                player.name.isNotEmpty ? player.name[0].toUpperCase() : 'P',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 50,
-                  fontWeight: FontWeight.bold,
+            child: ClipOval(
+              // ✅ প্রথমে profilePhotoUrl চেক করো, না থাকলে imageUrl চেক করো
+              child: (player.profilePhotoUrl != null && player.profilePhotoUrl!.isNotEmpty)
+                  ? Image.network(
+                player.profilePhotoUrl!,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF28A745), Color(0xFF20C997)],
+                      ),
+                    ),
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF28A745), Color(0xFF20C997)],
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        player.name.isNotEmpty
+                            ? player.name[0].toUpperCase()
+                            : 'P',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 50,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              )
+                  : Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF28A745), Color(0xFF20C997)],
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    player.name.isNotEmpty
+                        ? player.name[0].toUpperCase()
+                        : 'P',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 50,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -271,7 +319,6 @@ class _MyPlayerProfileScreenState extends State<MyPlayerProfileScreen>
       ),
     );
   }
-
   Widget _buildInfoTab(player) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
