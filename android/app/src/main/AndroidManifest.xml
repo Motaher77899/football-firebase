@@ -1,20 +1,26 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- এখানে package="" লাইনটা থাকবে না -->
 
-    <!-- এই পারমিশনগুলো যোগ করো (Android 13+ এর জন্য নতুন সিস্টেম) -->
+    <!-- ✅ Internet Permissions (Firebase এর জন্য অবশ্যই লাগবে) -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
+    <!-- ✅ Storage Permissions -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32" /> <!-- Android 13+ এ লাগে না -->
+        android:maxSdkVersion="32" />
 
-    <!-- Android 13+ (API 33+) এর জন্য নতুন গ্রানুলার পারমিশন (সবচেয়ে ভালো প্র্যাকটিস) -->
+    <!-- ✅ Android 13+ (API 33+) এর জন্য নতুন পারমিশন -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <!-- <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" /> --> <!-- ভিডিও লাগলে -->
-    <!-- <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" /> -->
+
+    <!-- ✅ Camera permission (যদি ক্যামেরা থেকে ছবি তুলতে চাও) -->
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
-        android:label="football_firebase"
+        android:label="Football Live Score"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:enableOnBackInvokedCallback="true"
+        android:usesCleartextTraffic="true">  <!-- ✅ এটা যোগ করো -->
 
         <activity
             android:name=".MainActivity"
@@ -42,7 +48,7 @@
 
     </application>
 
-    <!-- এই queries টা ঠিক আছে, রাখো -->
+    <!-- Queries -->
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>

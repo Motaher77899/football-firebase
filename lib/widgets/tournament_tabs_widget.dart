@@ -2679,23 +2679,474 @@
 //     );
 //   }
 // }
+//
+// import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:flutter/material.dart';
+// import 'package:football_user_app/widgets/tournament_match_timeline.dart';
+//
+// import '../models/tournament/tournament_match_model.dart';
+//
+//
+// // ============================================================================
+// // TAB 7: TIMELINE (All matches timeline)
+// // ============================================================================
+// class TimelineTab extends StatelessWidget {
+//   final String tournamentId;
+//
+//   const TimelineTab({
+//     Key? key,
+//     required this.tournamentId,
+//   }) : super(key: key);
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return StreamBuilder<QuerySnapshot>(
+//       stream: FirebaseFirestore.instance
+//           .collection('tournament_matches')
+//           .where('tournamentId', isEqualTo: tournamentId)
+//           .where('status', whereIn: ['live', 'finished'])  // Only completed/live matches
+//           .snapshots(),
+//       builder: (context, snapshot) {
+//         if (snapshot.connectionState == ConnectionState.waiting) {
+//           return const Center(
+//             child: CircularProgressIndicator(color: Color(0xFF28A745)),
+//           );
+//         }
+//
+//         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+//           return _buildEmptyState();
+//         }
+//
+//         // Parse matches
+//         final matches = snapshot.data!.docs
+//             .map((doc) => TournamentMatch.fromMap(
+//           doc.data() as Map<String, dynamic>,
+//           doc.id,
+//         ))
+//             .where((match) => match.timeline.isNotEmpty)
+//             .toList();
+//
+//         if (matches.isEmpty) {
+//           return _buildEmptyState();
+//         }
+//
+//         // Sort by date (most recent first)
+//         matches.sort((a, b) =>
+//             b.rankingUpdatedAt.compareTo(a.rankingUpdatedAt));
+//
+//         return ListView.builder(
+//           padding: const EdgeInsets.all(16),
+//           itemCount: matches.length,
+//           itemBuilder: (context, index) {
+//             final match = matches[index];
+//             return _buildMatchTimelineCard(context, match);
+//           },
+//         );
+//       },
+//     );
+//   }
+//
+//   Widget _buildMatchTimelineCard(BuildContext context, TournamentMatch match) {
+//     return Container(
+//       margin: const EdgeInsets.only(bottom: 16),
+//       decoration: BoxDecoration(
+//         color: const Color(0xFF16213E),
+//         borderRadius: BorderRadius.circular(16),
+//         border: Border.all(color: Colors.white12),
+//       ),
+//       child: Column(
+//         children: [
+//           // Match Header
+//           Container(
+//             padding: const EdgeInsets.all(12),
+//             decoration: BoxDecoration(
+//               color: const Color(0xFF0F3460),
+//               borderRadius: const BorderRadius.only(
+//                 topLeft: Radius.circular(16),
+//                 topRight: Radius.circular(16),
+//               ),
+//             ),
+//             child: Row(
+//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//               children: [
+//                 // Round
+//                 Text(
+//                   match.round,
+//                   style: const TextStyle(
+//                     color: Colors.white70,
+//                     fontSize: 12,
+//                   ),
+//                 ),
+//                 // Score
+//                 Text(
+//                   '${match.scoreA} - ${match.scoreB}',
+//                   style: const TextStyle(
+//                     color: Colors.white,
+//                     fontSize: 20,
+//                     fontWeight: FontWeight.bold,
+//                   ),
+//                 ),
+//                 // Status
+//                 Container(
+//                   padding: const EdgeInsets.symmetric(
+//                     horizontal: 8,
+//                     vertical: 4,
+//                   ),
+//                   decoration: BoxDecoration(
+//                     color: const Color(0xFF4CAF50).withOpacity(0.2),
+//                     borderRadius: BorderRadius.circular(8),
+//                   ),
+//                   child: Text(
+//                     match.statusInBengali,
+//                     style: const TextStyle(
+//                       color: Color(0xFF4CAF50),
+//                       fontSize: 11,
+//                       fontWeight: FontWeight.bold,
+//                     ),
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           ),
+//
+//           // Timeline Stats Summary
+//           Padding(
+//             padding: const EdgeInsets.all(12),
+//             child: TournamentMatchTimelineStats(match: match),
+//           ),
+//
+//           // View Full Timeline Button
+//           Padding(
+//             padding: const EdgeInsets.all(12),
+//             child: ElevatedButton.icon(
+//               onPressed: () {
+//                 Navigator.push(
+//                   context,
+//                   MaterialPageRoute(
+//                     builder: (context) => MatchTimelineFullScreen(
+//                       match: match,
+//                     ),
+//                   ),
+//                 );
+//               },
+//               icon: const Icon(Icons.timeline),
+//               label: const Text('সম্পূর্ণ টাইমলাইন দেখুন'),
+//               style: ElevatedButton.styleFrom(
+//                 backgroundColor: const Color(0xFF28A745),
+//                 foregroundColor: Colors.white,
+//                 minimumSize: const Size(double.infinity, 45),
+//                 shape: RoundedRectangleBorder(
+//                   borderRadius: BorderRadius.circular(12),
+//                 ),
+//               ),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+//
+//   Widget _buildEmptyState() {
+//     return Center(
+//       child: Column(
+//         mainAxisAlignment: MainAxisAlignment.center,
+//         children: const [
+//           Icon(Icons.timeline, size: 80, color: Colors.white24),
+//           SizedBox(height: 16),
+//           Text(
+//             'কোন টাইমলাইন নেই',
+//             style: TextStyle(color: Colors.white54, fontSize: 16),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+//
+// // ============================================================================
+// // FULL SCREEN MATCH TIMELINE
+// // ============================================================================
+// class MatchTimelineFullScreen extends StatelessWidget {
+//   final TournamentMatch match;
+//
+//   const MatchTimelineFullScreen({
+//     Key? key,
+//     required this.match,
+//   }) : super(key: key);
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       backgroundColor: const Color(0xFF1A1A2E),
+//       appBar: AppBar(
+//         backgroundColor: const Color(0xFF16213E),
+//         title: Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             Text(
+//               match.round,
+//               style: const TextStyle(fontSize: 14, color: Colors.white70),
+//             ),
+//             Text(
+//               '${match.scoreA} - ${match.scoreB}',
+//               style: const TextStyle(
+//                 fontSize: 18,
+//                 fontWeight: FontWeight.bold,
+//                 color: Colors.white,
+//               ),
+//             ),
+//           ],
+//         ),
+//         iconTheme: const IconThemeData(color: Colors.white),
+//       ),
+//       body: Column(
+//         children: [
+//           // Stats Summary
+//           Padding(
+//             padding: const EdgeInsets.all(16),
+//             child: TournamentMatchTimelineStats(match: match),
+//           ),
+//
+//           // Timeline
+//           Expanded(
+//             child: TournamentMatchTimelineWidget(match: match),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:football_user_app/widgets/tournament_match_timeline.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
+// Models
+import '../models/tournament/tournament_model.dart' hide TournamentMatch;
 import '../models/tournament/tournament_match_model.dart';
+import '../models/team_model.dart';
+import '../models/match_model.dart';
+
+// Providers
+import '../providers/team_provider.dart';
+
+// Widgets
+import '../widgets/tournament_match_card.dart';
 
 
+// Screens
+import '../screens/match_details_screen.dart';
+import '../screens/tournament_team_players_screen.dart';
+
 // ============================================================================
-// TAB 7: TIMELINE (All matches timeline)
+// TAB 1: TOURNAMENT INFO
 // ============================================================================
-class TimelineTab extends StatelessWidget {
+class TournamentInfoTab extends StatelessWidget {
+  final Tournament tournament;
+
+  const TournamentInfoTab({Key? key, required this.tournament})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final dateFormat = DateFormat('dd MMMM yyyy');
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Description
+          _buildSection(
+            title: '📋 বিবরণ',
+            child: Text(
+              tournament.description,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 15,
+                height: 1.5,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Schedule
+          _buildSection(
+            title: '📅 সময়সূচী',
+            child: Column(
+              children: [
+                _buildInfoRow(
+                  icon: Icons.play_circle_outline,
+                  label: 'শুরু',
+                  value: dateFormat.format(tournament.startDate),
+                  iconColor: const Color(0xFF4CAF50),
+                ),
+                const SizedBox(height: 12),
+                _buildInfoRow(
+                  icon: Icons.stop_circle_outlined,
+                  label: 'শেষ',
+                  value: dateFormat.format(tournament.endDate),
+                  iconColor: const Color(0xFFFF5252),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Prize Pool
+          if (tournament.prizePool.isNotEmpty)
+            _buildSection(
+              title: '🏆 পুরস্কার',
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFFFFD700).withOpacity(0.2),
+                      const Color(0xFFFFA000).withOpacity(0.2),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFFFD700), width: 2),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.emoji_events,
+                        size: 40, color: Color(0xFFFFD700)),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Text(
+                        tournament.prizePool,
+                        style: const TextStyle(
+                          color: Color(0xFFFFD700),
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          const SizedBox(height: 16),
+
+          // Organizer
+          _buildSection(
+            title: '👤 আয়োজক',
+            child: Column(
+              children: [
+                _buildInfoRow(
+                  icon: Icons.person,
+                  label: 'নাম',
+                  value: tournament.organizerName,
+                ),
+                if (tournament.organizerContact.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _buildInfoRow(
+                    icon: Icons.phone,
+                    label: 'যোগাযোগ',
+                    value: tournament.organizerContact,
+                    iconColor: const Color(0xFF4CAF50),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSection({required String title, required Widget child}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF16213E),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: child,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    Color iconColor = Colors.white,
+  }) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: iconColor.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: iconColor, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(color: Colors.white54, fontSize: 13),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ============================================================================
+// TAB 2: MATCHES
+// ============================================================================
+class MatchesTab extends StatelessWidget {
   final String tournamentId;
+  final TeamProvider teamProvider;
 
-  const TimelineTab({
+  const MatchesTab({
     Key? key,
     required this.tournamentId,
+    required this.teamProvider,
   }) : super(key: key);
 
   @override
@@ -2704,7 +3155,155 @@ class TimelineTab extends StatelessWidget {
       stream: FirebaseFirestore.instance
           .collection('tournament_matches')
           .where('tournamentId', isEqualTo: tournamentId)
-          .where('status', whereIn: ['live', 'finished'])  // Only completed/live matches
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF28A745)),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return _buildErrorState(snapshot.error.toString());
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return _buildEmptyState('কোন ম্যাচ নেই', Icons.sports_soccer);
+        }
+
+        final matches = snapshot.data!.docs
+            .map((doc) {
+          try {
+            return TournamentMatch.fromMap(
+              doc.data() as Map<String, dynamic>,
+              doc.id,
+            );
+          } catch (e) {
+            debugPrint('❌ Error parsing match: $e');
+            return null;
+          }
+        })
+            .whereType<TournamentMatch>()
+            .toList();
+
+        if (matches.isEmpty) {
+          return _buildEmptyState('কোন ম্যাচ নেই', Icons.sports_soccer);
+        }
+
+        matches.sort((a, b) => a.matchDate.compareTo(b.matchDate));
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: matches.length,
+          itemBuilder: (context, index) {
+            final match = matches[index];
+            final matchModel = _convertToMatchModel(match, teamProvider);
+
+            return GestureDetector(
+              onTap: matchModel != null
+                  ? () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MatchDetailsScreen(
+                      match: matchModel,
+                      teamProvider: teamProvider,
+                    ),
+                  ),
+                );
+              }
+                  : null,
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                child: TournamentMatchCard(
+                  match: match,
+                  teamProvider: teamProvider,
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  MatchModel? _convertToMatchModel(
+      TournamentMatch match,
+      TeamProvider teamProvider,
+      ) {
+    try {
+      final homeTeam = teamProvider.getTeamById(match.homeTeamId);
+      final awayTeam = teamProvider.getTeamById(match.awayTeamId);
+
+      if (homeTeam == null || awayTeam == null) return null;
+
+      return MatchModel(
+        id: match.id,
+        teamA: homeTeam.name,
+        teamB: awayTeam.name,
+        scoreA: match.homeScore,
+        scoreB: match.awayScore,
+        time: match.matchDate,
+        date: match.matchDate,
+        status: match.status,
+        tournament: tournamentId,
+        venue: match.venue,
+      );
+    } catch (e) {
+      debugPrint('❌ Error converting match: $e');
+      return null;
+    }
+  }
+
+  Widget _buildEmptyState(String message, IconData icon) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 80, color: Colors.white24),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: const TextStyle(color: Colors.white54, fontSize: 16),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String error) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, size: 80, color: Colors.red),
+          const SizedBox(height: 16),
+          Text(
+            'Error: $error',
+            style: const TextStyle(color: Colors.white54, fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// TAB 3: POINTS TABLE
+// ============================================================================
+class PointsTableTab extends StatelessWidget {
+  final String tournamentId;
+
+  const PointsTableTab({Key? key, required this.tournamentId})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('tournament_team_stats')
+          .where('tournamentId', isEqualTo: tournamentId)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -2717,133 +3316,168 @@ class TimelineTab extends StatelessWidget {
           return _buildEmptyState();
         }
 
-        // Parse matches
-        final matches = snapshot.data!.docs
-            .map((doc) => TournamentMatch.fromMap(
-          doc.data() as Map<String, dynamic>,
-          doc.id,
-        ))
-            .where((match) => match.timeline.isNotEmpty)
-            .toList();
+        final teams = snapshot.data!.docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return {
+            'teamName': data['teamName'] ?? 'Unknown',
+            'matchesPlayed': data['matchesPlayed'] ?? 0,
+            'wins': data['wins'] ?? 0,
+            'draws': data['draws'] ?? 0,
+            'losses': data['losses'] ?? 0,
+            'goalsFor': data['goalsFor'] ?? 0,
+            'goalsAgainst': data['goalsAgainst'] ?? 0,
+            'goalDifference': data['goalDifference'] ?? 0,
+            'points': data['points'] ?? 0,
+          };
+        }).toList();
 
-        if (matches.isEmpty) {
-          return _buildEmptyState();
-        }
+        teams.sort((a, b) {
+          final pointsCompare =
+          (b['points'] as int).compareTo(a['points'] as int);
+          if (pointsCompare != 0) return pointsCompare;
+          return (b['goalDifference'] as int)
+              .compareTo(a['goalDifference'] as int);
+        });
 
-        // Sort by date (most recent first)
-        matches.sort((a, b) =>
-            b.rankingUpdatedAt.compareTo(a.rankingUpdatedAt));
-
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: matches.length,
-          itemBuilder: (context, index) {
-            final match = matches[index];
-            return _buildMatchTimelineCard(context, match);
-          },
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: _buildPointsTable(teams),
+          ),
         );
       },
     );
   }
 
-  Widget _buildMatchTimelineCard(BuildContext context, TournamentMatch match) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF16213E),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white12),
+  Widget _buildPointsTable(List<Map<String, dynamic>> teams) {
+    return DataTable(
+      headingRowColor: MaterialStateProperty.all(const Color(0xFF16213E)),
+      dataRowColor: MaterialStateProperty.all(const Color(0xFF0F3460)),
+      border: TableBorder.all(
+        color: const Color(0xFF28A745).withOpacity(0.3),
+        width: 1,
       ),
-      child: Column(
-        children: [
-          // Match Header
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F3460),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
+      columns: const [
+        DataColumn(
+            label: Text('#',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold))),
+        DataColumn(
+            label: Text('টিম',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold))),
+        DataColumn(
+            label: Text('ম্যাচ',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold))),
+        DataColumn(
+            label: Text('জয়',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold))),
+        DataColumn(
+            label: Text('ড্র',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold))),
+        DataColumn(
+            label: Text('হার',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold))),
+        DataColumn(
+            label: Text('GF',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold))),
+        DataColumn(
+            label: Text('GA',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold))),
+        DataColumn(
+            label: Text('GD',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold))),
+        DataColumn(
+            label: Text('পয়েন্ট',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold))),
+      ],
+      rows: teams.asMap().entries.map((entry) {
+        final index = entry.key;
+        final team = entry.value;
+        final isTopThree = index < 3;
+
+        return DataRow(
+          cells: [
+            DataCell(Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isTopThree ? _getPositionColor(index) : null,
+                shape: BoxShape.circle,
               ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Round
-                Text(
-                  match.round,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                  ),
-                ),
-                // Score
-                Text(
-                  '${match.scoreA} - ${match.scoreB}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                // Status
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4CAF50).withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    match.statusInBengali,
-                    style: const TextStyle(
-                      color: Color(0xFF4CAF50),
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Timeline Stats Summary
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: TournamentMatchTimelineStats(match: match),
-          ),
-
-          // View Full Timeline Button
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => MatchTimelineFullScreen(
-                      match: match,
-                    ),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.timeline),
-              label: const Text('সম্পূর্ণ টাইমলাইন দেখুন'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF28A745),
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 45),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+              child: Text(
+                '${index + 1}',
+                style: TextStyle(
+                  color: isTopThree ? Colors.white : Colors.white70,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
-          ),
-        ],
-      ),
+            )),
+            DataCell(Text(team['teamName'],
+                style: const TextStyle(color: Colors.white))),
+            DataCell(Text('${team['matchesPlayed']}',
+                style: const TextStyle(color: Colors.white70))),
+            DataCell(Text('${team['wins']}',
+                style: const TextStyle(color: Color(0xFF4CAF50)))),
+            DataCell(Text('${team['draws']}',
+                style: const TextStyle(color: Colors.amber))),
+            DataCell(Text('${team['losses']}',
+                style: const TextStyle(color: Colors.red))),
+            DataCell(Text('${team['goalsFor']}',
+                style: const TextStyle(color: Colors.white70))),
+            DataCell(Text('${team['goalsAgainst']}',
+                style: const TextStyle(color: Colors.white70))),
+            DataCell(Text(
+              '${team['goalDifference']}',
+              style: TextStyle(
+                color: (team['goalDifference'] as int) > 0
+                    ? const Color(0xFF4CAF50)
+                    : (team['goalDifference'] as int) < 0
+                    ? Colors.red
+                    : Colors.white70,
+                fontWeight: FontWeight.bold,
+              ),
+            )),
+            DataCell(Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF28A745),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '${team['points']}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            )),
+          ],
+        );
+      }).toList(),
     );
+  }
+
+  Color _getPositionColor(int position) {
+    switch (position) {
+      case 0:
+        return const Color(0xFFFFD700);
+      case 1:
+        return const Color(0xFFC0C0C0);
+      case 2:
+        return const Color(0xFFCD7F32);
+      default:
+        return Colors.transparent;
+    }
   }
 
   Widget _buildEmptyState() {
@@ -2851,10 +3485,10 @@ class TimelineTab extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: const [
-          Icon(Icons.timeline, size: 80, color: Colors.white24),
+          Icon(Icons.table_chart, size: 80, color: Colors.white24),
           SizedBox(height: 16),
           Text(
-            'কোন টাইমলাইন নেই',
+            'পয়েন্ট টেবিল নেই',
             style: TextStyle(color: Colors.white54, fontSize: 16),
           ),
         ],
@@ -2864,55 +3498,224 @@ class TimelineTab extends StatelessWidget {
 }
 
 // ============================================================================
-// FULL SCREEN MATCH TIMELINE
+// TAB 4: TEAMS
 // ============================================================================
-class MatchTimelineFullScreen extends StatelessWidget {
-  final TournamentMatch match;
+class TeamsTab extends StatelessWidget {
+  final String tournamentId;
+  final String tournamentName;
 
-  const MatchTimelineFullScreen({
+  const TeamsTab({
     Key? key,
-    required this.match,
+    required this.tournamentId,
+    required this.tournamentName,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF1A1A2E),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF16213E),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              match.round,
-              style: const TextStyle(fontSize: 14, color: Colors.white70),
-            ),
-            Text(
-              '${match.scoreA} - ${match.scoreB}',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+    final teamProvider = Provider.of<TeamProvider>(context);
+
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('tournaments')
+          .doc(tournamentId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF28A745)),
+          );
+        }
+
+        if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
+          return _buildEmptyState();
+        }
+
+        final tournamentData = snapshot.data!.data() as Map<String, dynamic>;
+        final teamIds = List<String>.from(tournamentData['teamIds'] ?? []);
+
+        if (teamIds.isEmpty) {
+          return _buildEmptyState();
+        }
+
+        final teams = teamIds
+            .map((id) => teamProvider.getTeamById(id))
+            .whereType<TeamModel>()
+            .toList();
+
+        if (teams.isEmpty) {
+          return _buildEmptyState();
+        }
+
+        return GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 0.9,
+          ),
+          itemCount: teams.length,
+          itemBuilder: (context, index) {
+            return _buildTeamCard(context, teams[index]);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildTeamCard(BuildContext context, TeamModel team) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TournamentTeamPlayersScreen(
+                tournamentId: tournamentId,
+                tournamentName: tournamentName,
+                team: team,
               ),
             ),
-          ],
-        ),
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: Column(
-        children: [
-          // Stats Summary
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: TournamentMatchTimelineStats(match: match),
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF16213E),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: const Color(0xFF28A745).withOpacity(0.3),
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF28A745).withOpacity(0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: ClipOval(
+                  child: team.logoUrl.isNotEmpty
+                      ? Image.network(
+                    team.logoUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return _buildTeamPlaceholder(team.name);
+                    },
+                  )
+                      : _buildTeamPlaceholder(team.name),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  team.name,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF28A745).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF28A745),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(
+                      Icons.people,
+                      color: Color(0xFF28A745),
+                      size: 14,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'খেলোয়াড় দেখুন',
+                      style: TextStyle(
+                        color: Color(0xFF28A745),
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-          // Timeline
-          Expanded(
-            child: TournamentMatchTimelineWidget(match: match),
+  Widget _buildTeamPlaceholder(String teamName) {
+    return Container(
+      color: const Color(0xFF28A745),
+      child: Center(
+        child: Text(
+          teamName.isNotEmpty ? teamName[0].toUpperCase() : '?',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Icon(Icons.groups, size: 80, color: Colors.white24),
+          SizedBox(height: 16),
+          Text(
+            'কোন টিম নেই',
+            style: TextStyle(color: Colors.white54, fontSize: 16),
           ),
         ],
       ),
     );
   }
 }
+
+// ============================================================================
+// TAB 5: TIMELINE
+// ============================================================================
+
+

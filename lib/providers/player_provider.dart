@@ -775,6 +775,7 @@ class PlayerProvider extends ChangeNotifier {
   }
 
   // ✅ Create player profile from user data (আপডেটেড - profilePhotoUrl support যোগ করা হয়েছে)
+  // ✅ Create player profile from user data (আপডেটেড - document ID এবং playerId একই হবে)
   Future<bool> createPlayerProfile({
     required UserModel user,
     required String position,
@@ -798,10 +799,10 @@ class PlayerProvider extends ChangeNotifier {
         return false;
       }
 
-      // Generate unique player ID
+      // ✅ Generate unique player ID
       String playerId = _generatePlayerId(user.upazila);
 
-      // Check if playerId already exists (very unlikely)
+      // ✅ Check if playerId already exists (very unlikely but checking anyway)
       QuerySnapshot playerIdCheck = await _firestore
           .collection('players')
           .where('playerId', isEqualTo: playerId)
@@ -816,27 +817,33 @@ class PlayerProvider extends ChangeNotifier {
             .get();
       }
 
-      // ✅ Create player document (profilePhotoUrl সহ)
-      DocumentReference docRef = await _firestore.collection('players').add({
+      // ✅ Create player document with custom ID (document ID এবং playerId একই)
+      await _firestore.collection('players').doc(playerId).set({
         'userId': user.uid,
         'name': user.fullName,
         'position': position,
         'imageUrl': '', // পুরাতন field (backward compatibility)
-        'profilePhotoUrl': user.profilePhotoUrl, // ✅ নতুন field - User এর ছবি
+        'profilePhotoUrl': user.profilePhotoUrl, // ✅ User এর ছবি
         'upazila': user.upazila,
         'district': user.district,
         'division': user.division,
         'dateOfBirth': Timestamp.fromDate(user.dateOfBirth),
-        'playerId': playerId,
+        'playerId': playerId, // ✅ document ID এবং playerId একই
         'teamName': null,
         'createdAt': Timestamp.fromDate(DateTime.now()),
       });
 
-      // Fetch the created player
-      DocumentSnapshot doc = await docRef.get();
+      // ✅ Fetch the created player
+      DocumentSnapshot doc = await _firestore
+          .collection('players')
+          .doc(playerId)
+          .get();
+
       _myPlayer = PlayerModel.fromFirestore(doc);
 
       debugPrint('✅ Player profile created: ${_myPlayer?.name}');
+      debugPrint('✅ Document ID: $playerId');
+      debugPrint('✅ Player ID: ${_myPlayer?.playerId}');
       _isLoading = false;
       notifyListeners();
       return true;
@@ -848,7 +855,6 @@ class PlayerProvider extends ChangeNotifier {
       return false;
     }
   }
-
   // Update player position
   Future<bool> updatePlayerPosition(String position) async {
     if (_myPlayer == null) {
