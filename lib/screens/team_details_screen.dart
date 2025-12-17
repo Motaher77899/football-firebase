@@ -762,13 +762,15 @@ class _TeamDetailsScreenState extends State<TeamDetailsScreen>
   //✅ Player Card - Favourite screen এর মতো exact design
  // ✅ Player Card - Favourite screen এর মতো exact design
   Widget _buildPlayerCard(PlayerModel player) {
+    // ✅ profilePhotoUrl থেকে ইমেজ নেওয়ার জন্য আপনার মডেলের মেথড ব্যবহার করা হয়েছে
+    final String displayImageUrl = player.getDisplayPhoto();
+
     return GestureDetector(
       onTap: () {
-        // Player details screen এ যেতে পারেন (optional)
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) =>PlayerScreen(player: player),
+            builder: (context) => PlayerScreen(player: player),
           ),
         );
       },
@@ -794,7 +796,7 @@ class _TeamDetailsScreenState extends State<TeamDetailsScreen>
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              // খেলোয়াড়ের অ্যাভাটার
+              // খেলোয়াড়ের অ্যাভাটার (আপনার অরিজিনাল গ্রিন ডিজাইন)
               Container(
                 width: 70,
                 height: 70,
@@ -812,9 +814,9 @@ class _TeamDetailsScreenState extends State<TeamDetailsScreen>
                   ),
                 ),
                 child: Center(
-                  child: player.imageUrl.isEmpty
+                  child: displayImageUrl.isEmpty
                       ? Text(
-                    player.name[0].toUpperCase(),
+                    player.name.isNotEmpty ? player.name[0].toUpperCase() : 'P',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 28,
@@ -823,18 +825,22 @@ class _TeamDetailsScreenState extends State<TeamDetailsScreen>
                   )
                       : ClipOval(
                     child: CachedNetworkImage(
-                      imageUrl: player.imageUrl,
+                      imageUrl: displayImageUrl,
+                      width: 70,
+                      height: 70,
                       fit: BoxFit.cover,
-                      errorWidget: (context, url, error) {  // ✅ এই line fix করা হয়েছে
-                        return Text(
-                          player.name[0].toUpperCase(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        );
-                      },
+                      placeholder: (context, url) => const CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                      errorWidget: (context, url, error) => Text(
+                        player.name.isNotEmpty ? player.name[0].toUpperCase() : 'P',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -846,7 +852,6 @@ class _TeamDetailsScreenState extends State<TeamDetailsScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // নাম
                     Text(
                       player.name,
                       style: const TextStyle(
@@ -857,7 +862,6 @@ class _TeamDetailsScreenState extends State<TeamDetailsScreen>
                     ),
                     const SizedBox(height: 6),
 
-                    // পজিশন
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
@@ -877,36 +881,21 @@ class _TeamDetailsScreenState extends State<TeamDetailsScreen>
                     ),
                     const SizedBox(height: 6),
 
-                    // প্লেয়ার আইডি এবং উপজেলা
                     Row(
                       children: [
-                        const Icon(
-                          Icons.badge,
-                          size: 14,
-                          color: Colors.white54,
-                        ),
+                        const Icon(Icons.badge, size: 14, color: Colors.white54),
                         const SizedBox(width: 4),
                         Text(
                           player.playerId,
-                          style: const TextStyle(
-                            color: Colors.white54,
-                            fontSize: 11,
-                          ),
+                          style: const TextStyle(color: Colors.white54, fontSize: 11),
                         ),
                         const SizedBox(width: 12),
-                        const Icon(
-                          Icons.location_on,
-                          size: 14,
-                          color: Colors.white54,
-                        ),
+                        const Icon(Icons.location_on, size: 14, color: Colors.white54),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             player.upazila,
-                            style: const TextStyle(
-                              color: Colors.white54,
-                              fontSize: 11,
-                            ),
+                            style: const TextStyle(color: Colors.white54, fontSize: 11),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -916,7 +905,6 @@ class _TeamDetailsScreenState extends State<TeamDetailsScreen>
                 ),
               ),
 
-              // তীর আইকন
               const Icon(
                 Icons.arrow_forward_ios,
                 color: Colors.white54,
@@ -924,6 +912,19 @@ class _TeamDetailsScreenState extends State<TeamDetailsScreen>
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+// ডিফল্ট অ্যাভাটার বিল্ডার
+  Widget _buildDefaultAvatar(PlayerModel player) {
+    return Container(
+      color: const Color(0xFF0F3460),
+      child: Center(
+        child: Text(
+          player.name.isNotEmpty ? player.name[0].toUpperCase() : 'P',
+          style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
         ),
       ),
     );

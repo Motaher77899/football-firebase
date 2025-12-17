@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../models/match_model.dart';
-import '../providers/team_provider.dart';
+import '../../models/match_model.dart';
+import '../../providers/team_provider.dart';
 
 class MatchInfoTab extends StatelessWidget {
   final MatchModel match;

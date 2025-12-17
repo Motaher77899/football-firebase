@@ -2923,12 +2923,12 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 // Models
-import '../models/tournament/tournament_model.dart' hide TournamentMatch;
-import '../models/tournament/tournament_match_model.dart';
 import '../models/team_model.dart';
 import '../models/match_model.dart';
 
 // Providers
+import '../models/tournament_models/tournament_match_model.dart';
+import '../models/tournament_models/tournament_model.dart' hide TournamentMatch;
 import '../providers/team_provider.dart';
 
 // Widgets
@@ -2936,8 +2936,8 @@ import '../widgets/tournament_match_card.dart';
 
 
 // Screens
-import '../screens/match_details_screen.dart';
-import '../screens/tournament_team_players_screen.dart';
+import '../screens/matches/match_details_screen.dart';
+import '../screens/tournaments/tournament_team_players_screen.dart';
 
 // ============================================================================
 // TAB 1: TOURNAMENT INFO

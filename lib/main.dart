@@ -13,8 +13,8 @@ import 'fcm_service.dart';
 import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'providers/player_provider.dart';
-import 'screens/login_screen.dart';
-import 'screens/signup_screen.dart';
+import 'screens/auth/login_screen.dart';
+import 'screens/auth/signup_screen.dart';
 import 'screens/my_profile_screen.dart';
 import 'screens/main_navigation_screen.dart';
 

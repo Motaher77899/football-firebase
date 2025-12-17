@@ -1889,13 +1889,11 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-
-// Models
-import '../models/tournament/tournament_match_model.dart';
-import '../models/team_model.dart';
+import '../../models/team_model.dart';
 
 // Providers
-import '../providers/team_provider.dart';
+import '../../models/tournament_models/tournament_match_model.dart';
+import '../../providers/team_provider.dart';
 
 /// Tournament Match Details Screen - Same Design as Regular Match
 class TournamentMatchDetailsScreen extends StatefulWidget {

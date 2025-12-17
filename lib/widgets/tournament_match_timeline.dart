@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/tournament/tournament_match_model.dart';
+import '../models/tournament_models/tournament_match_model.dart';
 
 
 // ============================================================================

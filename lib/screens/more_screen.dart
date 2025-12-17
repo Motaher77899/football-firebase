@@ -8,7 +8,7 @@ import '../providers/player_provider.dart';
 import 'my_profile_screen.dart';
 import 'team_list_screen.dart';
 import 'all_players_screen.dart';
-import 'tournament_list_screen.dart';
+import 'tournaments/tournament_list_screen.dart';
 import 'rankings_screen.dart';
 
 class MoreScreen extends StatelessWidget {

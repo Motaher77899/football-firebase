@@ -535,10 +535,7 @@ import 'package:rxdart/rxdart.dart';
 
 // Models
 import '../models/match_model.dart';
-import '../models/tournament/tournament_match_model.dart';
-
-// Providers
-import '../providers/match_provider.dart';
+import '../models/tournament_models/tournament_match_model.dart';
 import '../providers/team_provider.dart';
 
 // Widgets
@@ -546,8 +543,8 @@ import '../widgets/match_card.dart';
 import '../widgets/date_scroll_bar.dart';
 
 // Screens
-import 'match_details_screen.dart';
-import 'tournament_match_details_screen.dart';
+import 'matches/match_details_screen.dart';
+import 'tournaments/tournament_match_details_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);

@@ -2,9 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../models/match_model.dart';
-import '../models/team_model.dart';
-import '../providers/team_provider.dart';
+import '../../models/match_model.dart';
+import '../../models/team_model.dart';
+import '../../providers/team_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class MatchDetailsScreen extends StatefulWidget {

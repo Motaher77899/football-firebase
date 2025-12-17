@@ -870,14 +870,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
-// Models
-import '../models/tournament/tournament_model.dart';
-
 // Providers
-import '../providers/team_provider.dart';
+import '../../models/tournament_models/tournament_model.dart';
+import '../../providers/team_provider.dart';
 
 // Widgets
-import '../widgets/tournament_tabs_widget.dart';
+import '../../widgets/tournament_tabs_widget.dart';
 
 // ============================================================================
 // TOURNAMENT DETAILS SCREEN - User App (Fixed)

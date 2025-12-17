@@ -472,8 +472,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Models
-import '../models/team_model.dart';
-import '../models/player_model.dart';
+import '../../models/team_model.dart';
+import '../../models/player_model.dart';
 
 /// User app screen to VIEW selected players for a team in a tournament (Read-only)
 class TournamentTeamPlayersScreen extends StatefulWidget {

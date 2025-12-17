@@ -1,10 +1,10 @@
 
 import 'package:flutter/material.dart';
-import 'package:football_user_app/screens/tournament_%20details_screen.dart';
+import 'package:football_user_app/screens/tournaments/tournament_%20details_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../models/tournament/tournament_model.dart';
-import '../providers/tournament_provider.dart';
+import '../../models/tournament_models/tournament_model.dart';
+import '../../providers/tournament_provider.dart';
 
 
 class TournamentListScreen extends StatefulWidget {

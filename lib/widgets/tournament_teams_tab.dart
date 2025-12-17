@@ -897,7 +897,7 @@ import '../models/team_model.dart';
 
 // Providers
 import '../providers/team_provider.dart';
-import '../screens/tournament_team_players_screen.dart';
+import '../screens/tournaments/tournament_team_players_screen.dart';
 
 // Screens
 
