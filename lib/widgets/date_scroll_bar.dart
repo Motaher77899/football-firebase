@@ -80,6 +80,53 @@ class _DateScrollBarState extends State<DateScrollBar> {
     }
   }
 
+  // Future<void> _openCalendar() async {
+  //   final picked = await showDatePicker(
+  //     context: context,
+  //     initialDate: dates[selectedIndex],
+  //     firstDate: DateTime.now().subtract(const Duration(days: 365)),
+  //     lastDate: DateTime.now().add(const Duration(days: 365)),
+  //     builder: (context, child) {
+  //       return Theme(
+  //         data: ThemeData.dark().copyWith(
+  //           colorScheme: const ColorScheme.dark(
+  //             primary: Color(0xFF0F3460),
+  //             onPrimary: Colors.white,
+  //             surface: Colors.white10, // Color(0xFF16213E)
+  //             onSurface: Colors.white70,
+  //           ),
+  //         ),
+  //         child: child!,
+  //       );
+  //     },
+  //   );
+  //
+  //   if (picked != null) {
+  //     setState(() {
+  //       // নতুন তারিখ লিস্টে না থাকলে যোগ করো
+  //       if (!dates.any((d) =>
+  //           d.year == picked.year &&
+  //           d.month == picked.month &&
+  //           d.day == picked.day)) {
+  //         dates.add(picked);
+  //         dates.sort((a, b) => a.compareTo(b));
+  //         selectedIndex = dates.indexWhere((d) =>
+  //             d.year == picked.year &&
+  //             d.month == picked.month &&
+  //             d.day == picked.day);
+  //       } else {
+  //         selectedIndex = dates.indexWhere((d) =>
+  //             d.year == picked.year &&
+  //             d.month == picked.month &&
+  //             d.day == picked.day);
+  //       }
+  //     });
+  //
+  //     _centerTo(selectedIndex);
+  //     widget.onDateSelected(picked);
+  //   }
+  // }
+
   Future<void> _openCalendar() async {
     final picked = await showDatePicker(
       context: context,
@@ -90,10 +137,16 @@ class _DateScrollBarState extends State<DateScrollBar> {
         return Theme(
           data: ThemeData.dark().copyWith(
             colorScheme: const ColorScheme.dark(
-              primary: Color(0xFF0F3460),
+              primary: Color(0xFF28A745), // সিলেকশন সার্কেল (সবুজ)
               onPrimary: Colors.white,
-              surface: Colors.white10, // Color(0xFF16213E)
-              onSurface: Colors.white70,
+              surface: Color(0xFF16213E), // ক্যালেন্ডার ব্যাকগ্রাউন্ড
+              onSurface: Colors.white,
+            ),
+            dialogBackgroundColor: const Color(0xFF16213E),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF28A745), // OK/Cancel বাটন
+              ),
             ),
           ),
           child: child!,
@@ -103,30 +156,31 @@ class _DateScrollBarState extends State<DateScrollBar> {
 
     if (picked != null) {
       setState(() {
-        // নতুন তারিখ লিস্টে না থাকলে যোগ করো
-        if (!dates.any((d) =>
-            d.year == picked.year &&
-            d.month == picked.month &&
-            d.day == picked.day)) {
+        // ১. চেক করা যে তারিখটি ইতিমধ্যে লিস্টে আছে কি না
+        int existingIndex = dates.indexWhere((d) =>
+        d.year == picked.year && d.month == picked.month && d.day == picked.day);
+
+        if (existingIndex != -1) {
+          // তারিখটি লিস্টে থাকলে শুধু ইনডেক্স সেট করো
+          selectedIndex = existingIndex;
+        } else {
+          // ২. তারিখটি লিস্টে না থাকলে নতুন করে যোগ করো এবং সর্ট করো
           dates.add(picked);
           dates.sort((a, b) => a.compareTo(b));
+
+          // নতুন করে ইনডেক্স খুঁজে বের করো
           selectedIndex = dates.indexWhere((d) =>
-              d.year == picked.year &&
-              d.month == picked.month &&
-              d.day == picked.day);
-        } else {
-          selectedIndex = dates.indexWhere((d) =>
-              d.year == picked.year &&
-              d.month == picked.month &&
-              d.day == picked.day);
+          d.year == picked.year && d.month == picked.month && d.day == picked.day);
         }
       });
 
-      _centerTo(selectedIndex);
+      // ৩. হোম স্ক্রিনকে (Parent) জানানো যে তারিখ বদলানো হয়েছে
       widget.onDateSelected(picked);
+
+      // ৪. তারিখটিকে স্ক্রল করে মাঝখানে নিয়ে আসা
+      _centerTo(selectedIndex);
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Container(
