@@ -234,30 +234,25 @@ class PlayerProvider extends ChangeNotifier {
   }
 
   // Check if user already has a player profile
-  Future<void> checkPlayerProfile(String userId) async {
-    try {
-      QuerySnapshot snapshot = await _firestore
-          .collection('players')
-          .where('userId', isEqualTo: userId)
-          .limit(1)
-          .get();
-
+  // ✅ রিয়েল-টাইম প্লেয়ার প্রোফাইল চেক (snapshots ব্যবহার করে)
+  void listenToPlayerProfile(String userId) {
+    _firestore
+        .collection('players')
+        .where('userId', isEqualTo: userId)
+        .limit(1)
+        .snapshots() // get() এর বদলে snapshots()
+        .listen((snapshot) {
       if (snapshot.docs.isNotEmpty) {
         _myPlayer = PlayerModel.fromFirestore(snapshot.docs.first);
-        debugPrint('✅ Player profile found: ${_myPlayer?.name}');
+        debugPrint('✅ Player profile updated real-time: ${_myPlayer?.name}');
       } else {
         _myPlayer = null;
-        debugPrint('ℹ️ No player profile found');
       }
+      notifyListeners();
+    });
 
-      // Load favorites
-      await loadFavorites(userId);
-      notifyListeners();
-    } catch (e) {
-      debugPrint('❌ Error checking player profile: $e');
-      _errorMessage = 'প্লেয়ার প্রোফাইল চেক করতে ব্যর্থ: $e';
-      notifyListeners();
-    }
+    // আলাদাভাবে ফেভারিট লোড করুন
+    loadFavorites(userId);
   }
 
   // ✅ Create player profile from user data (আপডেটেড - profilePhotoUrl support যোগ করা হয়েছে)
@@ -341,51 +336,7 @@ class PlayerProvider extends ChangeNotifier {
       return false;
     }
   }
-  // Update player position
-  // Future<bool> updatePlayerPosition(String position) async {
-  //   if (_myPlayer == null) {
-  //     _errorMessage = 'প্লেয়ার প্রোফাইল নেই';
-  //     notifyListeners();
-  //     return false;
-  //   }
-  //
-  //   _isLoading = true;
-  //   notifyListeners();
-  //
-  //   try {
-  //     await _firestore.collection('players').doc(_myPlayer!.id).update({
-  //       'position': position,
-  //     });
-  //
-  //     // Update local data
-  //     _myPlayer = PlayerModel(
-  //       id: _myPlayer!.id,
-  //       userId: _myPlayer!.userId,
-  //       name: _myPlayer!.name,
-  //       position: position,
-  //       imageUrl: _myPlayer!.imageUrl,
-  //       profilePhotoUrl: _myPlayer!.profilePhotoUrl,
-  //       upazila: _myPlayer!.upazila,
-  //       district: _myPlayer!.district,
-  //       division: _myPlayer!.division,
-  //       dateOfBirth: _myPlayer!.dateOfBirth,
-  //       playerId: _myPlayer!.playerId,
-  //       teamName: _myPlayer!.teamName,
-  //       createdAt: _myPlayer!.createdAt,
-  //     );
-  //
-  //     debugPrint('✅ Player position updated to: $position');
-  //     _isLoading = false;
-  //     notifyListeners();
-  //     return true;
-  //   } catch (e) {
-  //     _errorMessage = 'আপডেট ব্যর্থ: $e';
-  //     debugPrint('❌ Error updating player position: $e');
-  //     _isLoading = false;
-  //     notifyListeners();
-  //     return false;
-  //   }
-  // }
+
 
   // ✅ Update player position using copyWith
   Future<bool> updatePlayerPosition(String position) async {
@@ -554,5 +505,32 @@ class PlayerProvider extends ChangeNotifier {
     _favoritePlayerIds.clear();
     _favoriteTeamIds.clear();
     notifyListeners();
+  }
+  // ✅ রিয়েল-টাইম প্লেয়ার প্রোফাইল চেক
+  Future<void> checkPlayerProfile(String userId) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      QuerySnapshot snapshot = await _firestore
+          .collection('players')
+          .where('userId', isEqualTo: userId)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        _myPlayer = PlayerModel.fromFirestore(snapshot.docs.first);
+      } else {
+        _myPlayer = null;
+      }
+
+      await loadFavorites(userId);
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'প্লেয়ার প্রোফাইল লোড করতে ব্যর্থ';
+      notifyListeners();
+    }
   }
 }

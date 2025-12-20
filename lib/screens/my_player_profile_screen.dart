@@ -1096,14 +1096,12 @@ class _MyPlayerProfileScreenState extends State<MyPlayerProfileScreen>
     final playerProvider = Provider.of<PlayerProvider>(context, listen: false);
 
     if (authProvider.currentUser != null) {
-      // অফলাইন সাপোর্ট থাকার কারণে এটি ক্যাশ থেকে ডেটা দ্রুত দেখাবে
-      await playerProvider.checkPlayerProfile(authProvider.currentUser!.uid);
+      // রিয়েল-টাইম লিসেনার চালু করা হলো
+      playerProvider.listenToPlayerProfile(authProvider.currentUser!.uid);
     }
 
     if (mounted) {
-      setState(() {
-        _isLoadingData = false;
-      });
+      setState(() => _isLoadingData = false);
     }
   }
 

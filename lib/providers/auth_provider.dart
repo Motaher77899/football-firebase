@@ -978,38 +978,62 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // ✅ প্রোফাইল ফটো আপলোড ও আপডেট
+// ✅ প্রোফাইল ফটো আপলোড ও আপডেট (ইউজার এবং প্লেয়ার উভয় কালেকশনে ফিক্সড)
   Future<bool> updateProfilePhoto(File imageFile) async {
     if (_currentUser == null) return false;
 
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
+      // ১. স্টোরেজ রেফারেন্স তৈরি
       Reference storageRef = _storage
           .ref()
           .child('profile_photos')
           .child('${_currentUser!.uid}.jpg');
 
+      // ২. ফাইল আপলোড করা
       UploadTask uploadTask = storageRef.putFile(imageFile);
       TaskSnapshot snapshot = await uploadTask;
       String photoUrl = await snapshot.ref.getDownloadURL();
 
+      // ৩. 'users' কালেকশন আপডেট (UID অনুযায়ী)
       await _firestore.collection('users').doc(_currentUser!.uid).update({
         'profilePhotoUrl': photoUrl,
       });
 
+      // ৪. 'players' কালেকশন আপডেট (Query ব্যবহার করে কারণ ID আলাদা হতে পারে)
+      // আমরা 'userId' ফিল্ড দিয়ে সার্চ করে ওই প্লেয়ারের সঠিক ডকুমেন্ট আইডি বের করব
+      final playerQuery = await _firestore
+          .collection('players')
+          .where('userId', isEqualTo: _currentUser!.uid)
+          .limit(1)
+          .get();
+
+      if (playerQuery.docs.isNotEmpty) {
+        // সঠিক ডকুমেন্ট আইডি দিয়ে আপডেট
+        String playerDocId = playerQuery.docs.first.id;
+        await _firestore.collection('players').doc(playerDocId).update({
+          'profilePhotoUrl': photoUrl,
+        });
+        debugPrint('✅ Players collection updated for: $playerDocId');
+      }
+
+      // ৫. লোকাল মডেল আপডেট
       _currentUser = _currentUser!.copyWith(profilePhotoUrl: photoUrl);
+
       _isLoading = false;
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = 'ছবি আপলোড ব্যর্থ হয়েছে।';
+      debugPrint('❌ Detailed Upload Error: $e');
+      _errorMessage = 'ছবি আপলোড ব্যর্থ হয়েছে।';
       _isLoading = false;
       notifyListeners();
       return false;
     }
   }
-
   // ✅ লগ আউট
   Future<void> signOut() async {
     await _auth.signOut();
