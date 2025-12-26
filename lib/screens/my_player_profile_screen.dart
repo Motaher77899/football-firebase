@@ -765,7 +765,6 @@
 //   }
 // }
 
-
 //
 // import 'package:cloud_firestore/cloud_firestore.dart';
 // import 'package:flutter/material.dart';
@@ -1060,7 +1059,6 @@
 //   }
 // }
 
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -1111,7 +1109,8 @@ class _MyPlayerProfileScreenState extends State<MyPlayerProfileScreen>
     super.dispose();
   }
 
-  Future<void> _updatePosition(String newPosition, PlayerProvider provider) async {
+  Future<void> _updatePosition(
+      String newPosition, PlayerProvider provider) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1129,7 +1128,8 @@ class _MyPlayerProfileScreenState extends State<MyPlayerProfileScreen>
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(success ? 'পজিশন আপডেট সফল হয়েছে' : 'আপডেট ব্যর্থ হয়েছে'),
+          content:
+              Text(success ? 'পজিশন আপডেট সফল হয়েছে' : 'আপডেট ব্যর্থ হয়েছে'),
           backgroundColor: success ? Colors.green : Colors.red,
         ),
       );
@@ -1145,7 +1145,8 @@ class _MyPlayerProfileScreenState extends State<MyPlayerProfileScreen>
           final player = playerProvider.myPlayer;
 
           if (_isLoadingData) {
-            return const Center(child: CircularProgressIndicator(color: Color(0xFF28A745)));
+            return const Center(
+                child: CircularProgressIndicator(color: Color(0xFF28A745)));
           }
 
           if (player == null) {
@@ -1164,7 +1165,8 @@ class _MyPlayerProfileScreenState extends State<MyPlayerProfileScreen>
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.edit, color: Colors.white),
-                    onPressed: () => _showEditPositionDialog(context, playerProvider),
+                    onPressed: () =>
+                        _showEditPositionDialog(context, playerProvider),
                   ),
                 ],
                 bottom: TabBar(
@@ -1191,13 +1193,15 @@ class _MyPlayerProfileScreenState extends State<MyPlayerProfileScreen>
 
   // ✅ হেডার ডিজাইন যেখানে ক্যাশ ইমেজ ব্যবহার করা হয়েছে
   Widget _buildPlayerHeader(player) {
-    String? photoUrl = (player.profilePhotoUrl != null && player.profilePhotoUrl!.isNotEmpty)
-        ? player.profilePhotoUrl
-        : null;
+    String? photoUrl =
+        (player.profilePhotoUrl != null && player.profilePhotoUrl!.isNotEmpty)
+            ? player.profilePhotoUrl
+            : null;
 
     return Container(
       decoration: const BoxDecoration(
-        gradient: LinearGradient(colors: [Color(0xFF0F3460), Color(0xFF1A5490)]),
+        gradient:
+            LinearGradient(colors: [Color(0xFF0F3460), Color(0xFF1A5490)]),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -1213,29 +1217,41 @@ class _MyPlayerProfileScreenState extends State<MyPlayerProfileScreen>
             child: ClipOval(
               child: photoUrl != null
                   ? CachedNetworkImage(
-                imageUrl: photoUrl,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => const Center(
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                ),
-                errorWidget: (context, url, error) => const Icon(Icons.person, size: 50, color: Colors.white),
-              )
+                      imageUrl: photoUrl,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => const Center(
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white),
+                      ),
+                      errorWidget: (context, url, error) => const Icon(
+                          Icons.person,
+                          size: 50,
+                          color: Colors.white),
+                    )
                   : Container(
-                color: const Color(0xFF28A745),
-                child: Center(
-                  child: Text(
-                    player.name[0].toUpperCase(),
-                    style: const TextStyle(fontSize: 40, color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
+                      color: const Color(0xFF28A745),
+                      child: Center(
+                        child: Text(
+                          player.name[0].toUpperCase(),
+                          style: const TextStyle(
+                              fontSize: 40,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
             ),
           ),
           const SizedBox(height: 15),
-          Text(player.name, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+          Text(player.name,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Chip(
-            label: Text(player.position, style: const TextStyle(color: Colors.white)),
+            label: Text(player.position,
+                style: const TextStyle(color: Colors.white)),
             backgroundColor: const Color(0xFF28A745),
           ),
         ],
@@ -1244,7 +1260,8 @@ class _MyPlayerProfileScreenState extends State<MyPlayerProfileScreen>
   }
 
   // পজিশন এডিট ডায়ালগ
-  void _showEditPositionDialog(BuildContext context, PlayerProvider playerProvider) {
+  void _showEditPositionDialog(
+      BuildContext context, PlayerProvider playerProvider) {
     String? tempPosition = playerProvider.myPlayer?.position;
 
     showDialog(
@@ -1254,24 +1271,30 @@ class _MyPlayerProfileScreenState extends State<MyPlayerProfileScreen>
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: const Color(0xFF16213E),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-              title: const Text('পজিশন পরিবর্তন', style: TextStyle(color: Colors.white)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15)),
+              title: const Text('পজিশন পরিবর্তন',
+                  style: TextStyle(color: Colors.white)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
-                children: ['Forward', 'Midfielder', 'Defender', 'Goalkeeper'].map((pos) {
+                children: ['ফরওয়ার্ড', 'মিডফিল্ডার', 'ডিফেন্ডার', 'গোলকিপার']
+                    .map((pos) {
                   return RadioListTile<String>(
-                    title: Text(pos, style: const TextStyle(color: Colors.white)),
+                    title:
+                        Text(pos, style: const TextStyle(color: Colors.white)),
                     value: pos,
                     groupValue: tempPosition,
                     activeColor: const Color(0xFF28A745),
-                    onChanged: (val) => setDialogState(() => tempPosition = val),
+                    onChanged: (val) =>
+                        setDialogState(() => tempPosition = val),
                   );
                 }).toList(),
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('বাতিল', style: TextStyle(color: Colors.white70)),
+                  child: const Text('বাতিল',
+                      style: TextStyle(color: Colors.white70)),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -1280,7 +1303,8 @@ class _MyPlayerProfileScreenState extends State<MyPlayerProfileScreen>
                       _updatePosition(tempPosition!, playerProvider);
                     }
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF28A745)),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF28A745)),
                   child: const Text('সংরক্ষণ'),
                 ),
               ],
@@ -1302,7 +1326,8 @@ class _MyPlayerProfileScreenState extends State<MyPlayerProfileScreen>
           const Divider(color: Colors.white24),
           _buildInfoRow(Icons.sports, 'পজিশন', player.position),
           const Divider(color: Colors.white24),
-          _buildInfoRow(Icons.cake, 'জন্ম তারিখ', DateFormat('dd MMM yyyy').format(player.dateOfBirth)),
+          _buildInfoRow(Icons.cake, 'জন্ম তারিখ',
+              DateFormat('dd MMM yyyy').format(player.dateOfBirth)),
           const Divider(color: Colors.white24),
           _buildInfoRow(Icons.location_on, 'উপজেলা', player.upazila),
           const Divider(color: Colors.white24),
@@ -1323,8 +1348,14 @@ class _MyPlayerProfileScreenState extends State<MyPlayerProfileScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                Text(value, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500)),
+                Text(label,
+                    style:
+                        const TextStyle(color: Colors.white54, fontSize: 12)),
+                Text(value,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500)),
               ],
             ),
           ),
@@ -1338,15 +1369,19 @@ class _MyPlayerProfileScreenState extends State<MyPlayerProfileScreen>
       stream: playerProvider.getPlayerMatches(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: Color(0xFF28A745)));
+          return const Center(
+              child: CircularProgressIndicator(color: Color(0xFF28A745)));
         }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('কোন ম্যাচ পাওয়া যায়নি', style: TextStyle(color: Colors.white54)));
+          return const Center(
+              child: Text('কোন ম্যাচ পাওয়া যায়নি',
+                  style: TextStyle(color: Colors.white54)));
         }
         return ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: snapshot.data!.length,
-          itemBuilder: (context, index) => _buildMatchCard(snapshot.data![index]),
+          itemBuilder: (context, index) =>
+              _buildMatchCard(snapshot.data![index]),
         );
       },
     );
@@ -1360,10 +1395,16 @@ class _MyPlayerProfileScreenState extends State<MyPlayerProfileScreen>
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        title: Text('${match['teamA']} vs ${match['teamB']}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text('${match['teamA']} vs ${match['teamB']}',
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold)),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 8.0),
-          child: Text('Score: ${match['scoreA']} - ${match['scoreB']}', style: const TextStyle(color: Color(0xFF28A745), fontSize: 16, fontWeight: FontWeight.bold)),
+          child: Text('Score: ${match['scoreA']} - ${match['scoreB']}',
+              style: const TextStyle(
+                  color: Color(0xFF28A745),
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold)),
         ),
         trailing: const Icon(Icons.chevron_right, color: Colors.white24),
       ),
@@ -1377,11 +1418,13 @@ class _MyPlayerProfileScreenState extends State<MyPlayerProfileScreen>
         children: [
           const Icon(Icons.person_off, color: Colors.white30, size: 80),
           const SizedBox(height: 16),
-          const Text('প্লেয়ার প্রোফাইল নেই', style: TextStyle(color: Colors.white, fontSize: 18)),
+          const Text('প্লেয়ার প্রোফাইল নেই',
+              style: TextStyle(color: Colors.white, fontSize: 18)),
           const SizedBox(height: 20),
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF28A745)),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF28A745)),
             child: const Text('ফিরে যান'),
           ),
         ],

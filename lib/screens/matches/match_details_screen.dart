@@ -2,10 +2,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../models/match_model.dart';
 import '../../models/team_model.dart';
+import '../../providers/match_provider.dart';
 import '../../providers/team_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+
+import 'match_lineups_tab.dart';
 
 class MatchDetailsScreen extends StatefulWidget {
   final MatchModel match;
@@ -24,11 +28,29 @@ class MatchDetailsScreen extends StatefulWidget {
 class _MatchDetailsScreenState extends State<MatchDetailsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  MatchModel? _enrichedMatch;
+  bool _isLoadingPhotos = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _loadMatchWithPhotos();
+  }
+  Future<void> _loadMatchWithPhotos() async {
+    setState(() {
+      _isLoadingPhotos = true;
+    });
+
+    final matchProvider = Provider.of<MatchProvider>(context, listen: false);
+    MatchModel? match = await matchProvider.fetchMatchWithPlayerPhotos(
+      widget.match.id,
+    );
+
+    setState(() {
+      _enrichedMatch = match ?? widget.match;
+      _isLoadingPhotos = false;
+    });
   }
 
   @override
@@ -70,6 +92,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen>
     String teamBLogoUrl = _getTeamLogoUrl(widget.match.teamB);
     TeamModel? teamA = widget.teamProvider.getTeamByName(widget.match.teamA);
     TeamModel? teamB = widget.teamProvider.getTeamByName(widget.match.teamB);
+    final displayMatch = _enrichedMatch ?? widget.match;
 
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A2E),
@@ -329,7 +352,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen>
                 _buildMatchInfoTab(),
                 _buildTimelineTab(),
                 _buildStatsTab(),
-                _buildLineupTab(),
+                MatchLineupsTab(match: displayMatch),
               ],
             ),
           ),
@@ -972,1010 +995,1010 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen>
   }
 
   // Lineup Tab
-  Widget _buildLineupTab() {
-    if (widget.match.lineUpA == null && widget.match.lineUpB == null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.sports_outlined,
-              size: 64,
-              color: Colors.white30,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'লাইনআপ নেই',
-              style: TextStyle(
-                color: Colors.white54,
-                fontSize: 16,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+  // Widget _buildLineupTab() {
+  //   if (widget.match.lineUpA == null && widget.match.lineUpB == null) {
+  //     return Center(
+  //       child: Column(
+  //         mainAxisAlignment: MainAxisAlignment.center,
+  //         children: [
+  //           Icon(
+  //             Icons.sports_outlined,
+  //             size: 64,
+  //             color: Colors.white30,
+  //           ),
+  //           const SizedBox(height: 16),
+  //           Text(
+  //             'লাইনআপ নেই',
+  //             style: TextStyle(
+  //               color: Colors.white54,
+  //               fontSize: 16,
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     );
+  //   }
+  //
+  //   return DefaultTabController(
+  //     length: 2,
+  //     child: Column(
+  //       children: [
+  //         // Team Tabs
+  //         Container(
+  //           margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+  //           decoration: BoxDecoration(
+  //             color: const Color(0xFF16213E),
+  //             borderRadius: BorderRadius.circular(12),
+  //             border: Border.all(
+  //               color: Colors.white.withOpacity(0.1),
+  //               width: 1,
+  //             ),
+  //           ),
+  //           child: TabBar(
+  //             indicator: BoxDecoration(
+  //               borderRadius: BorderRadius.circular(12),
+  //               gradient: LinearGradient(
+  //                 colors: [
+  //                   Colors.blue.withOpacity(0.3),
+  //                   Colors.blue.withOpacity(0.2),
+  //                 ],
+  //               ),
+  //             ),
+  //             indicatorSize: TabBarIndicatorSize.tab,
+  //             labelColor: Colors.white,
+  //             unselectedLabelColor: Colors.white54,
+  //             labelStyle: const TextStyle(
+  //               fontSize: 14,
+  //               fontWeight: FontWeight.bold,
+  //             ),
+  //             unselectedLabelStyle: const TextStyle(
+  //               fontSize: 14,
+  //               fontWeight: FontWeight.normal,
+  //             ),
+  //             tabs: [
+  //               Tab(
+  //                 child: Row(
+  //                   mainAxisAlignment: MainAxisAlignment.center,
+  //                   children: [
+  //                     Container(
+  //                       width: 8,
+  //                       height: 8,
+  //                       decoration: BoxDecoration(
+  //                         color: Colors.blue,
+  //                         shape: BoxShape.circle,
+  //                       ),
+  //                     ),
+  //                     const SizedBox(width: 8),
+  //                     Flexible(
+  //                       child: Text(
+  //                         widget.match.teamA,
+  //                         maxLines: 1,
+  //                         overflow: TextOverflow.ellipsis,
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+  //               Tab(
+  //                 child: Row(
+  //                   mainAxisAlignment: MainAxisAlignment.center,
+  //                   children: [
+  //                     Container(
+  //                       width: 8,
+  //                       height: 8,
+  //                       decoration: BoxDecoration(
+  //                         color: Colors.orange,
+  //                         shape: BoxShape.circle,
+  //                       ),
+  //                     ),
+  //                     const SizedBox(width: 8),
+  //                     Flexible(
+  //                       child: Text(
+  //                         widget.match.teamB,
+  //                         maxLines: 1,
+  //                         overflow: TextOverflow.ellipsis,
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //
+  //         // Team Lineup Content
+  //         Expanded(
+  //           child: TabBarView(
+  //             children: [
+  //               // Team A Lineup
+  //               _buildSingleTeamLineup(
+  //                 widget.match.teamA,
+  //                 widget.match.lineUpA,
+  //                 Colors.blue,
+  //               ),
+  //               // Team B Lineup
+  //               _buildSingleTeamLineup(
+  //                 widget.match.teamB,
+  //                 widget.match.lineUpB,
+  //                 Colors.orange,
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
-    return DefaultTabController(
-      length: 2,
-      child: Column(
-        children: [
-          // Team Tabs
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF16213E),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.1),
-                width: 1,
-              ),
-            ),
-            child: TabBar(
-              indicator: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.blue.withOpacity(0.3),
-                    Colors.blue.withOpacity(0.2),
-                  ],
-                ),
-              ),
-              indicatorSize: TabBarIndicatorSize.tab,
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.white54,
-              labelStyle: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-              unselectedLabelStyle: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.normal,
-              ),
-              tabs: [
-                Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: Colors.blue,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          widget.match.teamA,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: Colors.orange,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          widget.match.teamB,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Team Lineup Content
-          Expanded(
-            child: TabBarView(
-              children: [
-                // Team A Lineup
-                _buildSingleTeamLineup(
-                  widget.match.teamA,
-                  widget.match.lineUpA,
-                  Colors.blue,
-                ),
-                // Team B Lineup
-                _buildSingleTeamLineup(
-                  widget.match.teamB,
-                  widget.match.lineUpB,
-                  Colors.orange,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSingleTeamLineup(
-      String teamName, LineUp? lineUp, Color teamColor) {
-    if (lineUp == null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.sports_outlined,
-              size: 64,
-              color: Colors.white30,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'লাইনআপ নেই',
-              style: TextStyle(
-                color: Colors.white54,
-                fontSize: 16,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // Group players by position (exclude substitutes)
-    final gk = lineUp.players
-        .where((p) => p.position == 'GK' && !p.isSubstitute)
-        .toList();
-    final def = lineUp.players
-        .where((p) => p.position == 'DEF' && !p.isSubstitute)
-        .toList();
-    final mid = lineUp.players
-        .where((p) => p.position == 'MID' && !p.isSubstitute)
-        .toList();
-    final fwd = lineUp.players
-        .where((p) => p.position == 'FWD' && !p.isSubstitute)
-        .toList();
-    final subs = lineUp.players.where((p) => p.isSubstitute).toList();
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        children: [
-          // Formation Display
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  teamColor.withOpacity(0.2),
-                  teamColor.withOpacity(0.1),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: teamColor.withOpacity(0.3),
-                width: 2,
-              ),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.shield,
-                      color: teamColor,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        teamName.toUpperCase(),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: teamColor.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.sports_soccer,
-                        color: teamColor,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Formation: ${lineUp.formation}',
-                        style: TextStyle(
-                          color: teamColor,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Starting XI Header
-          Row(
-            children: [
-              Container(
-                width: 4,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: teamColor,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'স্টার্টিং ইলেভেন',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // Positions
-          if (gk.isNotEmpty) ...[
-            _buildPositionGroupFull('গোলরক্ষক', gk, teamColor),
-            const SizedBox(height: 16),
-          ],
-          if (def.isNotEmpty) ...[
-            _buildPositionGroupFull('ডিফেন্ডার', def, teamColor),
-            const SizedBox(height: 16),
-          ],
-          if (mid.isNotEmpty) ...[
-            _buildPositionGroupFull('মিডফিল্ডার', mid, teamColor),
-            const SizedBox(height: 16),
-          ],
-          if (fwd.isNotEmpty) ...[
-            _buildPositionGroupFull('ফরোয়ার্ড', fwd, teamColor),
-          ],
-
-          // Substitutes
-          if (subs.isNotEmpty) ...[
-            const SizedBox(height: 32),
-            Row(
-              children: [
-                Container(
-                  width: 4,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: Colors.white54,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'সাবস্টিটিউট',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ...subs.map((player) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _buildPlayerCardFull(player, teamColor),
-            )),
-          ],
-
-          const SizedBox(height: 20),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTeamLineup(String teamName, LineUp lineUp, Color color) {
-    // Group players by position
-    final gk = lineUp.players.where((p) => p.position == 'GK').toList();
-    final def = lineUp.players.where((p) => p.position == 'DEF').toList();
-    final mid = lineUp.players.where((p) => p.position == 'MID').toList();
-    final fwd = lineUp.players.where((p) => p.position == 'FWD').toList();
-    final subs = lineUp.players.where((p) => p.isSubstitute).toList();
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF16213E),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 2,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(Icons.shield, color: color, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                teamName.toUpperCase(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  lineUp.formation,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 20),
-
-          // Starting XI
-          if (gk.isNotEmpty) ...[
-            _buildPositionGroup('গোলরক্ষক', gk, color),
-            const SizedBox(height: 12),
-          ],
-          if (def.isNotEmpty) ...[
-            _buildPositionGroup('ডিফেন্ডার', def, color),
-            const SizedBox(height: 12),
-          ],
-          if (mid.isNotEmpty) ...[
-            _buildPositionGroup('মিডফিল্ডার', mid, color),
-            const SizedBox(height: 12),
-          ],
-          if (fwd.isNotEmpty) ...[
-            _buildPositionGroup('ফরোয়ার্ড', fwd, color),
-          ],
-
-          // Substitutes
-          if (subs.isNotEmpty) ...[
-            const SizedBox(height: 20),
-            const Divider(color: Colors.white24),
-            const SizedBox(height: 12),
-            Text(
-              'সাবস্টিটিউট',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            ...subs.map((player) => _buildPlayerCard(player, color)),
-          ],
-        ],
-      ),
-    );
-  }
-
-  // Compact version for side-by-side layout
-  Widget _buildTeamLineupCompact(
-      String teamName, LineUp lineUp, Color color, bool isLeftSide) {
-    // Group players by position (exclude substitutes from main list)
-    final gk = lineUp.players
-        .where((p) => p.position == 'GK' && !p.isSubstitute)
-        .toList();
-    final def = lineUp.players
-        .where((p) => p.position == 'DEF' && !p.isSubstitute)
-        .toList();
-    final mid = lineUp.players
-        .where((p) => p.position == 'MID' && !p.isSubstitute)
-        .toList();
-    final fwd = lineUp.players
-        .where((p) => p.position == 'FWD' && !p.isSubstitute)
-        .toList();
-    final subs = lineUp.players.where((p) => p.isSubstitute).toList();
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF16213E),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 2,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Team Header - Simple text only
-          Center(
-            child: Column(
-              children: [
-                Text(
-                  teamName.toUpperCase(),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                // Formation Badge
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    lineUp.formation,
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // Starting XI
-          if (gk.isNotEmpty) ...[
-            _buildPositionGroupCompact('গোলরক্ষক', gk, color),
-            const SizedBox(height: 10),
-          ],
-          if (def.isNotEmpty) ...[
-            _buildPositionGroupCompact('ডিফেন্ডার', def, color),
-            const SizedBox(height: 10),
-          ],
-          if (mid.isNotEmpty) ...[
-            _buildPositionGroupCompact('মিডফিল্ডার', mid, color),
-            const SizedBox(height: 10),
-          ],
-          if (fwd.isNotEmpty) ...[
-            _buildPositionGroupCompact('ফরোয়ার্ড', fwd, color),
-          ],
-
-          // Substitutes
-          if (subs.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            const Divider(color: Colors.white24, height: 1),
-            const SizedBox(height: 10),
-            Center(
-              child: Text(
-                'সাবস্টিটিউট',
-                style: TextStyle(
-                  color: Colors.white60,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            ...subs.map((player) => _buildPlayerCardCompact(player, color)),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPositionGroup(
-      String position, List<PlayerLineUp> players, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          position,
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 8),
-        ...players.map((player) => _buildPlayerCard(player, color)),
-      ],
-    );
-  }
-
-  Widget _buildPositionGroupCompact(
-      String position, List<PlayerLineUp> players, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          position,
-          style: const TextStyle(
-            color: Colors.white60,
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 6),
-        ...players.map((player) => _buildPlayerCardCompact(player, color)),
-      ],
-    );
-  }
-
-  Widget _buildPositionGroupFull(
-      String position, List<PlayerLineUp> players, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            position,
-            style: TextStyle(
-              color: color,
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        ...players.map((player) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: _buildPlayerCardFull(player, color),
-        )),
-      ],
-    );
-  }
-
-  Widget _buildPlayerCard(PlayerLineUp player, Color color) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F3460).withOpacity(0.5),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: player.isCaptain
-              ? Colors.amber.withOpacity(0.5)
-              : Colors.white.withOpacity(0.1),
-          width: player.isCaptain ? 2 : 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          // Jersey Number
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Center(
-              child: Text(
-                '${player.jerseyNumber}',
-                style: TextStyle(
-                  color: color,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 12),
-
-          // Player Name
-          Expanded(
-            child: Text(
-              player.playerName,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-
-          // Captain Badge
-          if (player.isCaptain)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.amber.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: Colors.amber, width: 1),
-              ),
-              child: const Text(
-                'C',
-                style: TextStyle(
-                  color: Colors.amber,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPlayerCardCompact(PlayerLineUp player, Color color) {
-    // Get first letter of player name
-    String firstLetter = player.playerName.isNotEmpty
-        ? player.playerName[0].toUpperCase()
-        : '?';
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F3460).withOpacity(0.5),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: player.isCaptain
-              ? Colors.amber.withOpacity(0.5)
-              : Colors.white.withOpacity(0.1),
-          width: player.isCaptain ? 1.5 : 0.5,
-        ),
-      ),
-      child: Row(
-        children: [
-          // Avatar with First Letter (Left)
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.3),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: color.withOpacity(0.5),
-                width: 1.5,
-              ),
-            ),
-            child: Center(
-              child: Text(
-                firstLetter,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 8),
-
-          // Player Name (Middle) - Flexible
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  player.playerName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                // Captain Badge below name if captain
-                if (player.isCaptain)
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.star,
-                        color: Colors.amber,
-                        size: 9,
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        'Captain',
-                        style: TextStyle(
-                          color: Colors.amber,
-                          fontSize: 8,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-
-          const SizedBox(width: 6),
-
-          // Jersey Number (Right)
-          Container(
-            constraints: const BoxConstraints(
-              minWidth: 32,
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(
-                color: color.withOpacity(0.4),
-                width: 1,
-              ),
-            ),
-            child: Center(
-              child: Text(
-                '${player.jerseyNumber}',
-                style: TextStyle(
-                  color: color,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPlayerCardFull(PlayerLineUp player, Color color) {
-    // Get first letter of player name
-    String firstLetter = player.playerName.isNotEmpty
-        ? player.playerName[0].toUpperCase()
-        : '?';
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF16213E),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: player.isCaptain
-              ? Colors.amber.withOpacity(0.5)
-              : color.withOpacity(0.2),
-          width: player.isCaptain ? 2 : 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Avatar with First Letter
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  color.withOpacity(0.4),
-                  color.withOpacity(0.2),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: color,
-                width: 2,
-              ),
-            ),
-            child: Center(
-              child: Text(
-                firstLetter,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 16),
-
-          // Player Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        player.playerName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    if (player.isCaptain)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.amber.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Colors.amber,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.star,
-                              color: Colors.amber,
-                              size: 12,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Captain',
-                              style: TextStyle(
-                                color: Colors.amber,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: color.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        _getPositionFullName(player.position),
-                        style: TextStyle(
-                          color: color,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(width: 12),
-
-          // Jersey Number
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  color.withOpacity(0.3),
-                  color.withOpacity(0.1),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: color.withOpacity(0.5),
-                width: 2,
-              ),
-            ),
-            child: Center(
-              child: Text(
-                '${player.jerseyNumber}',
-                style: TextStyle(
-                  color: color,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getPositionFullName(String position) {
-    switch (position) {
-      case 'GK':
-        return 'গোলরক্ষক';
-      case 'DEF':
-        return 'ডিফেন্ডার';
-      case 'MID':
-        return 'মিডফিল্ডার';
-      case 'FWD':
-        return 'ফরোয়ার্ড';
-      default:
-        return position;
-    }
-  }
+  // Widget _buildSingleTeamLineup(
+  //     String teamName, LineUp? lineUp, Color teamColor) {
+  //   if (lineUp == null) {
+  //     return Center(
+  //       child: Column(
+  //         mainAxisAlignment: MainAxisAlignment.center,
+  //         children: [
+  //           Icon(
+  //             Icons.sports_outlined,
+  //             size: 64,
+  //             color: Colors.white30,
+  //           ),
+  //           const SizedBox(height: 16),
+  //           Text(
+  //             'লাইনআপ নেই',
+  //             style: TextStyle(
+  //               color: Colors.white54,
+  //               fontSize: 16,
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     );
+  //   }
+  //
+  //   // Group players by position (exclude substitutes)
+  //   final gk = lineUp.players
+  //       .where((p) => p.position == 'গোলরক্ষক' && !p.isSubstitute)
+  //       .toList();
+  //   final def = lineUp.players
+  //       .where((p) => p.position == 'ডিফেন্ডার' && !p.isSubstitute)
+  //       .toList();
+  //   final mid = lineUp.players
+  //       .where((p) => p.position == 'মিডফিল্ডার' && !p.isSubstitute)
+  //       .toList();
+  //   final fwd = lineUp.players
+  //       .where((p) => p.position == 'ফরোয়ার্ড' && !p.isSubstitute)
+  //       .toList();
+  //   final subs = lineUp.players.where((p) => p.isSubstitute).toList();
+  //
+  //   return SingleChildScrollView(
+  //     padding: const EdgeInsets.symmetric(horizontal: 20),
+  //     child: Column(
+  //       children: [
+  //         // Formation Display
+  //         Container(
+  //           padding: const EdgeInsets.all(20),
+  //           decoration: BoxDecoration(
+  //             gradient: LinearGradient(
+  //               colors: [
+  //                 teamColor.withOpacity(0.2),
+  //                 teamColor.withOpacity(0.1),
+  //               ],
+  //             ),
+  //             borderRadius: BorderRadius.circular(16),
+  //             border: Border.all(
+  //               color: teamColor.withOpacity(0.3),
+  //               width: 2,
+  //             ),
+  //           ),
+  //           child: Column(
+  //             children: [
+  //               Row(
+  //                 mainAxisAlignment: MainAxisAlignment.center,
+  //                 children: [
+  //                   Icon(
+  //                     Icons.shield,
+  //                     color: teamColor,
+  //                     size: 24,
+  //                   ),
+  //                   const SizedBox(width: 12),
+  //                   Expanded(
+  //                     child: Text(
+  //                       teamName.toUpperCase(),
+  //                       textAlign: TextAlign.center,
+  //                       style: const TextStyle(
+  //                         color: Colors.white,
+  //                         fontSize: 18,
+  //                         fontWeight: FontWeight.bold,
+  //                         letterSpacing: 1.2,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //               const SizedBox(height: 12),
+  //               Container(
+  //                 padding: const EdgeInsets.symmetric(
+  //                   horizontal: 16,
+  //                   vertical: 8,
+  //                 ),
+  //                 decoration: BoxDecoration(
+  //                   color: teamColor.withOpacity(0.3),
+  //                   borderRadius: BorderRadius.circular(20),
+  //                 ),
+  //                 child: Row(
+  //                   mainAxisSize: MainAxisSize.min,
+  //                   children: [
+  //                     Icon(
+  //                       Icons.sports_soccer,
+  //                       color: teamColor,
+  //                       size: 18,
+  //                     ),
+  //                     const SizedBox(width: 8),
+  //                     Text(
+  //                       'Formation: ${lineUp.formation}',
+  //                       style: TextStyle(
+  //                         color: teamColor,
+  //                         fontSize: 14,
+  //                         fontWeight: FontWeight.bold,
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //
+  //         const SizedBox(height: 24),
+  //
+  //         // Starting XI Header
+  //         Row(
+  //           children: [
+  //             Container(
+  //               width: 4,
+  //               height: 24,
+  //               decoration: BoxDecoration(
+  //                 color: teamColor,
+  //                 borderRadius: BorderRadius.circular(2),
+  //               ),
+  //             ),
+  //             const SizedBox(width: 12),
+  //             const Text(
+  //               'স্টার্টিং ইলেভেন',
+  //               style: TextStyle(
+  //                 color: Colors.white,
+  //                 fontSize: 16,
+  //                 fontWeight: FontWeight.bold,
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //
+  //         const SizedBox(height: 16),
+  //
+  //         // Positions
+  //         if (gk.isNotEmpty) ...[
+  //           _buildPositionGroupFull('গোলরক্ষক', gk, teamColor),
+  //           const SizedBox(height: 16),
+  //         ],
+  //         if (def.isNotEmpty) ...[
+  //           _buildPositionGroupFull('ডিফেন্ডার', def, teamColor),
+  //           const SizedBox(height: 16),
+  //         ],
+  //         if (mid.isNotEmpty) ...[
+  //           _buildPositionGroupFull('মিডফিল্ডার', mid, teamColor),
+  //           const SizedBox(height: 16),
+  //         ],
+  //         if (fwd.isNotEmpty) ...[
+  //           _buildPositionGroupFull('ফরোয়ার্ড', fwd, teamColor),
+  //         ],
+  //
+  //         // Substitutes
+  //         if (subs.isNotEmpty) ...[
+  //           const SizedBox(height: 32),
+  //           Row(
+  //             children: [
+  //               Container(
+  //                 width: 4,
+  //                 height: 24,
+  //                 decoration: BoxDecoration(
+  //                   color: Colors.white54,
+  //                   borderRadius: BorderRadius.circular(2),
+  //                 ),
+  //               ),
+  //               const SizedBox(width: 12),
+  //               const Text(
+  //                 'সাবস্টিটিউট',
+  //                 style: TextStyle(
+  //                   color: Colors.white,
+  //                   fontSize: 16,
+  //                   fontWeight: FontWeight.bold,
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //           const SizedBox(height: 16),
+  //           ...subs.map((player) => Padding(
+  //             padding: const EdgeInsets.only(bottom: 12),
+  //             child: _buildPlayerCardFull(player, teamColor),
+  //           )),
+  //         ],
+  //
+  //         const SizedBox(height: 20),
+  //       ],
+  //     ),
+  //   );
+  // }
+  //
+  // Widget _buildTeamLineup(String teamName, LineUp lineUp, Color color) {
+  //   // Group players by position
+  //   final gk = lineUp.players.where((p) => p.position == 'গোলরক্ষক').toList();
+  //   final def = lineUp.players.where((p) => p.position == 'ডিফেন্ডার').toList();
+  //   final mid = lineUp.players.where((p) => p.position == 'মিডফিল্ডার').toList();
+  //   final fwd = lineUp.players.where((p) => p.position == 'ফরোয়ার্ড').toList();
+  //   final subs = lineUp.players.where((p) => p.isSubstitute).toList();
+  //
+  //   return Container(
+  //     margin: const EdgeInsets.symmetric(horizontal: 20),
+  //     padding: const EdgeInsets.all(20),
+  //     decoration: BoxDecoration(
+  //       color: const Color(0xFF16213E),
+  //       borderRadius: BorderRadius.circular(16),
+  //       border: Border.all(
+  //         color: color.withOpacity(0.3),
+  //         width: 2,
+  //       ),
+  //     ),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Row(
+  //           children: [
+  //             Container(
+  //               padding: const EdgeInsets.all(8),
+  //               decoration: BoxDecoration(
+  //                 color: color.withOpacity(0.2),
+  //                 borderRadius: BorderRadius.circular(8),
+  //               ),
+  //               child: Icon(Icons.shield, color: color, size: 20),
+  //             ),
+  //             const SizedBox(width: 12),
+  //             Text(
+  //               teamName.toUpperCase(),
+  //               style: const TextStyle(
+  //                 color: Colors.white,
+  //                 fontSize: 18,
+  //                 fontWeight: FontWeight.bold,
+  //               ),
+  //             ),
+  //             const Spacer(),
+  //             Container(
+  //               padding: const EdgeInsets.symmetric(
+  //                 horizontal: 12,
+  //                 vertical: 6,
+  //               ),
+  //               decoration: BoxDecoration(
+  //                 color: color.withOpacity(0.2),
+  //                 borderRadius: BorderRadius.circular(12),
+  //               ),
+  //               child: Text(
+  //                 lineUp.formation,
+  //                 style: TextStyle(
+  //                   color: color,
+  //                   fontSize: 14,
+  //                   fontWeight: FontWeight.bold,
+  //                 ),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //
+  //         const SizedBox(height: 20),
+  //
+  //         // Starting XI
+  //         if (gk.isNotEmpty) ...[
+  //           _buildPositionGroup('গোলরক্ষক', gk, color),
+  //           const SizedBox(height: 12),
+  //         ],
+  //         if (def.isNotEmpty) ...[
+  //           _buildPositionGroup('ডিফেন্ডার', def, color),
+  //           const SizedBox(height: 12),
+  //         ],
+  //         if (mid.isNotEmpty) ...[
+  //           _buildPositionGroup('মিডফিল্ডার', mid, color),
+  //           const SizedBox(height: 12),
+  //         ],
+  //         if (fwd.isNotEmpty) ...[
+  //           _buildPositionGroup('ফরোয়ার্ড', fwd, color),
+  //         ],
+  //
+  //         // Substitutes
+  //         if (subs.isNotEmpty) ...[
+  //           const SizedBox(height: 20),
+  //           const Divider(color: Colors.white24),
+  //           const SizedBox(height: 12),
+  //           Text(
+  //             'সাবস্টিটিউট',
+  //             style: TextStyle(
+  //               color: Colors.white70,
+  //               fontSize: 14,
+  //               fontWeight: FontWeight.bold,
+  //             ),
+  //           ),
+  //           const SizedBox(height: 12),
+  //           ...subs.map((player) => _buildPlayerCard(player, color)),
+  //         ],
+  //       ],
+  //     ),
+  //   );
+  // }
+  //
+  // // Compact version for side-by-side layout
+  // Widget _buildTeamLineupCompact(
+  //     String teamName, LineUp lineUp, Color color, bool isLeftSide) {
+  //   // Group players by position (exclude substitutes from main list)
+  //   final gk = lineUp.players
+  //       .where((p) => p.position == 'গোলরক্ষক' && !p.isSubstitute)
+  //       .toList();
+  //   final def = lineUp.players
+  //       .where((p) => p.position == 'ডিফেন্ডার' && !p.isSubstitute)
+  //       .toList();
+  //   final mid = lineUp.players
+  //       .where((p) => p.position == 'মিডফিল্ডার' && !p.isSubstitute)
+  //       .toList();
+  //   final fwd = lineUp.players
+  //       .where((p) => p.position == 'ফরোয়ার্ড' && !p.isSubstitute)
+  //       .toList();
+  //   final subs = lineUp.players.where((p) => p.isSubstitute).toList();
+  //
+  //   return Container(
+  //     padding: const EdgeInsets.all(16),
+  //     decoration: BoxDecoration(
+  //       color: const Color(0xFF16213E),
+  //       borderRadius: BorderRadius.circular(16),
+  //       border: Border.all(
+  //         color: color.withOpacity(0.3),
+  //         width: 2,
+  //       ),
+  //     ),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         // Team Header - Simple text only
+  //         Center(
+  //           child: Column(
+  //             children: [
+  //               Text(
+  //                 teamName.toUpperCase(),
+  //                 textAlign: TextAlign.center,
+  //                 maxLines: 2,
+  //                 overflow: TextOverflow.ellipsis,
+  //                 style: const TextStyle(
+  //                   color: Colors.white,
+  //                   fontSize: 14,
+  //                   fontWeight: FontWeight.bold,
+  //                   letterSpacing: 1.0,
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 6),
+  //               // Formation Badge
+  //               Container(
+  //                 padding: const EdgeInsets.symmetric(
+  //                   horizontal: 10,
+  //                   vertical: 4,
+  //                 ),
+  //                 decoration: BoxDecoration(
+  //                   color: color.withOpacity(0.2),
+  //                   borderRadius: BorderRadius.circular(10),
+  //                 ),
+  //                 child: Text(
+  //                   lineUp.formation,
+  //                   style: TextStyle(
+  //                     color: color,
+  //                     fontSize: 11,
+  //                     fontWeight: FontWeight.bold,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //
+  //         const SizedBox(height: 12),
+  //
+  //         // Starting XI
+  //         if (gk.isNotEmpty) ...[
+  //           _buildPositionGroupCompact('গোলরক্ষক', gk, color),
+  //           const SizedBox(height: 10),
+  //         ],
+  //         if (def.isNotEmpty) ...[
+  //           _buildPositionGroupCompact('ডিফেন্ডার', def, color),
+  //           const SizedBox(height: 10),
+  //         ],
+  //         if (mid.isNotEmpty) ...[
+  //           _buildPositionGroupCompact('মিডফিল্ডার', mid, color),
+  //           const SizedBox(height: 10),
+  //         ],
+  //         if (fwd.isNotEmpty) ...[
+  //           _buildPositionGroupCompact('ফরোয়ার্ড', fwd, color),
+  //         ],
+  //
+  //         // Substitutes
+  //         if (subs.isNotEmpty) ...[
+  //           const SizedBox(height: 16),
+  //           const Divider(color: Colors.white24, height: 1),
+  //           const SizedBox(height: 10),
+  //           Center(
+  //             child: Text(
+  //               'সাবস্টিটিউট',
+  //               style: TextStyle(
+  //                 color: Colors.white60,
+  //                 fontSize: 11,
+  //                 fontWeight: FontWeight.bold,
+  //               ),
+  //             ),
+  //           ),
+  //           const SizedBox(height: 10),
+  //           ...subs.map((player) => _buildPlayerCardCompact(player, color)),
+  //         ],
+  //       ],
+  //     ),
+  //   );
+  // }
+  //
+  // Widget _buildPositionGroup(
+  //     String position, List<PlayerLineUp> players, Color color) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Text(
+  //         position,
+  //         style: const TextStyle(
+  //           color: Colors.white70,
+  //           fontSize: 13,
+  //           fontWeight: FontWeight.bold,
+  //         ),
+  //       ),
+  //       const SizedBox(height: 8),
+  //       ...players.map((player) => _buildPlayerCard(player, color)),
+  //     ],
+  //   );
+  // }
+  //
+  // Widget _buildPositionGroupCompact(
+  //     String position, List<PlayerLineUp> players, Color color) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Text(
+  //         position,
+  //         style: const TextStyle(
+  //           color: Colors.white60,
+  //           fontSize: 10,
+  //           fontWeight: FontWeight.bold,
+  //         ),
+  //       ),
+  //       const SizedBox(height: 6),
+  //       ...players.map((player) => _buildPlayerCardCompact(player, color)),
+  //     ],
+  //   );
+  // }
+  //
+  // Widget _buildPositionGroupFull(
+  //     String position, List<PlayerLineUp> players, Color color) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Container(
+  //         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+  //         decoration: BoxDecoration(
+  //           color: color.withOpacity(0.15),
+  //           borderRadius: BorderRadius.circular(8),
+  //         ),
+  //         child: Text(
+  //           position,
+  //           style: TextStyle(
+  //             color: color,
+  //             fontSize: 13,
+  //             fontWeight: FontWeight.bold,
+  //           ),
+  //         ),
+  //       ),
+  //       const SizedBox(height: 12),
+  //       ...players.map((player) => Padding(
+  //         padding: const EdgeInsets.only(bottom: 12),
+  //         child: _buildPlayerCardFull(player, color),
+  //       )),
+  //     ],
+  //   );
+  // }
+  //
+  // Widget _buildPlayerCard(PlayerLineUp player, Color color) {
+  //   return Container(
+  //     margin: const EdgeInsets.only(bottom: 8),
+  //     padding: const EdgeInsets.all(12),
+  //     decoration: BoxDecoration(
+  //       color: const Color(0xFF0F3460).withOpacity(0.5),
+  //       borderRadius: BorderRadius.circular(8),
+  //       border: Border.all(
+  //         color: player.isCaptain
+  //             ? Colors.amber.withOpacity(0.5)
+  //             : Colors.white.withOpacity(0.1),
+  //         width: player.isCaptain ? 2 : 1,
+  //       ),
+  //     ),
+  //     child: Row(
+  //       children: [
+  //         // Jersey Number
+  //         Container(
+  //           width: 36,
+  //           height: 36,
+  //           decoration: BoxDecoration(
+  //             color: color.withOpacity(0.2),
+  //             borderRadius: BorderRadius.circular(8),
+  //           ),
+  //           child: Center(
+  //             child: Text(
+  //               '${player.jerseyNumber}',
+  //               style: TextStyle(
+  //                 color: color,
+  //                 fontSize: 16,
+  //                 fontWeight: FontWeight.bold,
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //
+  //         const SizedBox(width: 12),
+  //
+  //         // Player Name
+  //         Expanded(
+  //           child: Text(
+  //             player.playerName,
+  //             style: const TextStyle(
+  //               color: Colors.white,
+  //               fontSize: 15,
+  //               fontWeight: FontWeight.w600,
+  //             ),
+  //           ),
+  //         ),
+  //
+  //         // Captain Badge
+  //         if (player.isCaptain)
+  //           Container(
+  //             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+  //             decoration: BoxDecoration(
+  //               color: Colors.amber.withOpacity(0.2),
+  //               borderRadius: BorderRadius.circular(6),
+  //               border: Border.all(color: Colors.amber, width: 1),
+  //             ),
+  //             child: const Text(
+  //               'C',
+  //               style: TextStyle(
+  //                 color: Colors.amber,
+  //                 fontSize: 12,
+  //                 fontWeight: FontWeight.bold,
+  //               ),
+  //             ),
+  //           ),
+  //       ],
+  //     ),
+  //   );
+  // }
+  //
+  // Widget _buildPlayerCardCompact(PlayerLineUp player, Color color) {
+  //   // Get first letter of player name
+  //   String firstLetter = player.playerName.isNotEmpty
+  //       ? player.playerName[0].toUpperCase()
+  //       : '?';
+  //
+  //   return Container(
+  //     margin: const EdgeInsets.only(bottom: 6),
+  //     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+  //     decoration: BoxDecoration(
+  //       color: const Color(0xFF0F3460).withOpacity(0.5),
+  //       borderRadius: BorderRadius.circular(6),
+  //       border: Border.all(
+  //         color: player.isCaptain
+  //             ? Colors.amber.withOpacity(0.5)
+  //             : Colors.white.withOpacity(0.1),
+  //         width: player.isCaptain ? 1.5 : 0.5,
+  //       ),
+  //     ),
+  //     child: Row(
+  //       children: [
+  //         // Avatar with First Letter (Left)
+  //         Container(
+  //           width: 30,
+  //           height: 30,
+  //           decoration: BoxDecoration(
+  //             color: color.withOpacity(0.3),
+  //             shape: BoxShape.circle,
+  //             border: Border.all(
+  //               color: color.withOpacity(0.5),
+  //               width: 1.5,
+  //             ),
+  //           ),
+  //           child: Center(
+  //             child: Text(
+  //               firstLetter,
+  //               style: TextStyle(
+  //                 color: color,
+  //                 fontSize: 14,
+  //                 fontWeight: FontWeight.bold,
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //
+  //         const SizedBox(width: 8),
+  //
+  //         // Player Name (Middle) - Flexible
+  //         Expanded(
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: [
+  //               Text(
+  //                 player.playerName,
+  //                 maxLines: 1,
+  //                 overflow: TextOverflow.ellipsis,
+  //                 style: const TextStyle(
+  //                   color: Colors.white,
+  //                   fontSize: 12,
+  //                   fontWeight: FontWeight.w600,
+  //                 ),
+  //               ),
+  //               // Captain Badge below name if captain
+  //               if (player.isCaptain)
+  //                 Row(
+  //                   mainAxisSize: MainAxisSize.min,
+  //                   children: [
+  //                     Icon(
+  //                       Icons.star,
+  //                       color: Colors.amber,
+  //                       size: 9,
+  //                     ),
+  //                     const SizedBox(width: 3),
+  //                     Text(
+  //                       'Captain',
+  //                       style: TextStyle(
+  //                         color: Colors.amber,
+  //                         fontSize: 8,
+  //                         fontWeight: FontWeight.bold,
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //             ],
+  //           ),
+  //         ),
+  //
+  //         const SizedBox(width: 6),
+  //
+  //         // Jersey Number (Right)
+  //         Container(
+  //           constraints: const BoxConstraints(
+  //             minWidth: 32,
+  //           ),
+  //           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+  //           decoration: BoxDecoration(
+  //             color: color.withOpacity(0.2),
+  //             borderRadius: BorderRadius.circular(6),
+  //             border: Border.all(
+  //               color: color.withOpacity(0.4),
+  //               width: 1,
+  //             ),
+  //           ),
+  //           child: Center(
+  //             child: Text(
+  //               '${player.jerseyNumber}',
+  //               style: TextStyle(
+  //                 color: color,
+  //                 fontSize: 13,
+  //                 fontWeight: FontWeight.bold,
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+  //
+  // Widget _buildPlayerCardFull(PlayerLineUp player, Color color) {
+  //   // Get first letter of player name
+  //   String firstLetter = player.playerName.isNotEmpty
+  //       ? player.playerName[0].toUpperCase()
+  //       : '?';
+  //
+  //   return Container(
+  //     padding: const EdgeInsets.all(16),
+  //     decoration: BoxDecoration(
+  //       color: const Color(0xFF16213E),
+  //       borderRadius: BorderRadius.circular(12),
+  //       border: Border.all(
+  //         color: player.isCaptain
+  //             ? Colors.amber.withOpacity(0.5)
+  //             : color.withOpacity(0.2),
+  //         width: player.isCaptain ? 2 : 1,
+  //       ),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: Colors.black.withOpacity(0.2),
+  //           blurRadius: 8,
+  //           offset: const Offset(0, 2),
+  //         ),
+  //       ],
+  //     ),
+  //     child: Row(
+  //       children: [
+  //         // Avatar with First Letter
+  //         Container(
+  //           width: 50,
+  //           height: 50,
+  //           decoration: BoxDecoration(
+  //             gradient: LinearGradient(
+  //               colors: [
+  //                 color.withOpacity(0.4),
+  //                 color.withOpacity(0.2),
+  //               ],
+  //               begin: Alignment.topLeft,
+  //               end: Alignment.bottomRight,
+  //             ),
+  //             shape: BoxShape.circle,
+  //             border: Border.all(
+  //               color: color,
+  //               width: 2,
+  //             ),
+  //           ),
+  //           child: Center(
+  //             child: Text(
+  //               firstLetter,
+  //               style: TextStyle(
+  //                 color: color,
+  //                 fontSize: 22,
+  //                 fontWeight: FontWeight.bold,
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //
+  //         const SizedBox(width: 16),
+  //
+  //         // Player Info
+  //         Expanded(
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               Row(
+  //                 children: [
+  //                   Expanded(
+  //                     child: Text(
+  //                       player.playerName,
+  //                       maxLines: 1,
+  //                       overflow: TextOverflow.ellipsis,
+  //                       style: const TextStyle(
+  //                         color: Colors.white,
+  //                         fontSize: 16,
+  //                         fontWeight: FontWeight.bold,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                   if (player.isCaptain)
+  //                     Container(
+  //                       padding: const EdgeInsets.symmetric(
+  //                         horizontal: 8,
+  //                         vertical: 4,
+  //                       ),
+  //                       decoration: BoxDecoration(
+  //                         color: Colors.amber.withOpacity(0.2),
+  //                         borderRadius: BorderRadius.circular(12),
+  //                         border: Border.all(
+  //                           color: Colors.amber,
+  //                           width: 1,
+  //                         ),
+  //                       ),
+  //                       child: Row(
+  //                         mainAxisSize: MainAxisSize.min,
+  //                         children: [
+  //                           Icon(
+  //                             Icons.star,
+  //                             color: Colors.amber,
+  //                             size: 12,
+  //                           ),
+  //                           const SizedBox(width: 4),
+  //                           Text(
+  //                             'Captain',
+  //                             style: TextStyle(
+  //                               color: Colors.amber,
+  //                               fontSize: 10,
+  //                               fontWeight: FontWeight.bold,
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                     ),
+  //                 ],
+  //               ),
+  //               const SizedBox(height: 6),
+  //               Row(
+  //                 children: [
+  //                   Container(
+  //                     padding: const EdgeInsets.symmetric(
+  //                       horizontal: 8,
+  //                       vertical: 4,
+  //                     ),
+  //                     decoration: BoxDecoration(
+  //                       color: color.withOpacity(0.2),
+  //                       borderRadius: BorderRadius.circular(6),
+  //                     ),
+  //                     child: Text(
+  //                       _getPositionFullName(player.position),
+  //                       style: TextStyle(
+  //                         color: color,
+  //                         fontSize: 11,
+  //                         fontWeight: FontWeight.w600,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //
+  //         const SizedBox(width: 12),
+  //
+  //         // Jersey Number
+  //         Container(
+  //           width: 60,
+  //           height: 60,
+  //           decoration: BoxDecoration(
+  //             gradient: LinearGradient(
+  //               colors: [
+  //                 color.withOpacity(0.3),
+  //                 color.withOpacity(0.1),
+  //               ],
+  //               begin: Alignment.topLeft,
+  //               end: Alignment.bottomRight,
+  //             ),
+  //             borderRadius: BorderRadius.circular(12),
+  //             border: Border.all(
+  //               color: color.withOpacity(0.5),
+  //               width: 2,
+  //             ),
+  //           ),
+  //           child: Center(
+  //             child: Text(
+  //               '${player.jerseyNumber}',
+  //               style: TextStyle(
+  //                 color: color,
+  //                 fontSize: 24,
+  //                 fontWeight: FontWeight.bold,
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+  //
+  // String _getPositionFullName(String position) {
+  //   switch (position) {
+  //     case 'GK':
+  //       return 'গোলরক্ষক';
+  //     case 'DEF':
+  //       return 'ডিফেন্ডার';
+  //     case 'MID':
+  //       return 'মিডফিল্ডার';
+  //     case 'FWD':
+  //       return 'ফরোয়ার্ড';
+  //     default:
+  //       return position;
+  //   }
+  // }
 
   // Helper Widgets
   Widget _buildInfoCard({

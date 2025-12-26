@@ -3247,7 +3247,7 @@ class MatchesTab extends StatelessWidget {
         date: match.matchDate,
         status: match.status,
         tournament: tournamentId,
-        venue: match.venue,
+        venue: match.venue, teamAId: '', teamBId: '', adminFullName: '', createdAt: DateTime.now(),
       );
     } catch (e) {
       debugPrint('❌ Error converting match: $e');

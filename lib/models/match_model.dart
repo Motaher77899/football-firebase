@@ -1,505 +1,186 @@
-//
-// import 'package:cloud_firestore/cloud_firestore.dart';
-//
-// class MatchModel {
-//   final String id;
-//   final String teamA;
-//   final String teamB;
-//   final int scoreA;
-//   final int scoreB;
-//   final DateTime date;
-//   final DateTime time;
-//   final String status; // live, upcoming, finished
-//   final String? tournament;
-//   final String? tournamentId;
-//   final String? venue;
-//   final List<MatchEvent> timeline;
-//   final MatchStats? stats;
-//   final LineUp? lineUpA;
-//   final LineUp? lineUpB;
-//   final HeadToHead? h2h;
-//
-//   MatchModel({
-//     required this.id,
-//     required this.teamA,
-//     required this.teamB,
-//     required this.scoreA,
-//     required this.scoreB,
-//     required this.date,
-//     required this.time,
-//     required this.status,
-//     this.tournament,
-//     this.tournamentId,
-//     this.venue,
-//     this.timeline = const [],
-//     this.stats,
-//     this.lineUpA,
-//     this.lineUpB,
-//     this.h2h,
-//   });
-//
-//   factory MatchModel.fromFirestore(DocumentSnapshot doc) {
-//     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-//
-//     return MatchModel(
-//       id: doc.id,
-//       teamA: data['teamA'] ?? '',
-//       teamB: data['teamB'] ?? '',
-//       scoreA: data['scoreA'] ?? 0,
-//       scoreB: data['scoreB'] ?? 0,
-//       date: (data['date'] as Timestamp).toDate(),
-//       time: (data['time'] as Timestamp).toDate(),
-//       status: data['status'] ?? 'upcoming',
-//       tournament: data['tournament'],
-//       tournamentId: data['tournamentId'],
-//       venue: data['venue'],
-//       timeline: (data['timeline'] as List<dynamic>?)
-//           ?.map((e) => MatchEvent.fromMap(e as Map<String, dynamic>))
-//           .toList() ?? [],
-//       stats: data['stats'] != null
-//           ? MatchStats.fromMap(data['stats'] as Map<String, dynamic>)
-//           : null,
-//       lineUpA: data['lineUpA'] != null
-//           ? LineUp.fromMap(data['lineUpA'] as Map<String, dynamic>)
-//           : null,
-//       lineUpB: data['lineUpB'] != null
-//           ? LineUp.fromMap(data['lineUpB'] as Map<String, dynamic>)
-//           : null,
-//       h2h: data['h2h'] != null
-//           ? HeadToHead.fromMap(data['h2h'] as Map<String, dynamic>)
-//           : null,
-//     );
-//   }
-//
-//   Map<String, dynamic> toFirestore() {
-//     return {
-//       'teamA': teamA,
-//       'teamB': teamB,
-//       'scoreA': scoreA,
-//       'scoreB': scoreB,
-//       'date': Timestamp.fromDate(date),
-//       'time': Timestamp.fromDate(time),
-//       'status': status,
-//       'tournament': tournament,
-//       'tournamentId': tournamentId,
-//       'venue': venue,
-//       'timeline': timeline.map((e) => e.toMap()).toList(),
-//       'stats': stats?.toMap(),
-//       'lineUpA': lineUpA?.toMap(),
-//       'lineUpB': lineUpB?.toMap(),
-//       'h2h': h2h?.toMap(),
-//     };
-//   }
-// }
-//
-// // Timeline Event Model
-// // Timeline Event Model
-// class MatchEvent {
-//   final String type; // goal, card, substitution
-//   final String team; // teamA or teamB
-//   final String playerName;
-//   final String playerId;  // ✅ ADDED - Critical for ranking
-//   final int minute;
-//   final String? details; // yellow_card, red_card, player_out, player_in
-//   final String? assistPlayerId; // ✅ ADDED - For assist tracking
-//
-//   MatchEvent({
-//     required this.type,
-//     required this.team,
-//     required this.playerName,
-//     required this.playerId,  // ✅ ADDED
-//     required this.minute,
-//     this.details,
-//     this.assistPlayerId,  // ✅ ADDED
-//   });
-//
-//   factory MatchEvent.fromMap(Map<String, dynamic> map) {
-//     return MatchEvent(
-//       type: map['type'] ?? '',
-//       team: map['team'] ?? '',
-//       playerName: map['playerName'] ?? '',
-//       playerId: map['playerId'] ?? '',  // ✅ ADDED
-//       minute: map['minute'] ?? 0,
-//       details: map['details'],
-//       assistPlayerId: map['assistPlayerId'],  // ✅ ADDED
-//     );
-//   }
-//
-//   Map<String, dynamic> toMap() {
-//     return {
-//       'type': type,
-//       'team': team,
-//       'playerName': playerName,
-//       'playerId': playerId,  // ✅ ADDED
-//       'minute': minute,
-//       'details': details,
-//       'assistPlayerId': assistPlayerId,  // ✅ ADDED
-//     };
-//   }
-// }
-//
-// // Match Statistics Model
-// class MatchStats {
-//   final int possessionA;
-//   final int possessionB;
-//   final int shotsA;
-//   final int shotsB;
-//   final int shotsOnTargetA;
-//   final int shotsOnTargetB;
-//   final int cornersA;
-//   final int cornersB;
-//   final int foulsA;
-//   final int foulsB;
-//   final int yellowCardsA;
-//   final int yellowCardsB;
-//   final int redCardsA;
-//   final int redCardsB;
-//
-//   MatchStats({
-//     this.possessionA = 50,
-//     this.possessionB = 50,
-//     this.shotsA = 0,
-//     this.shotsB = 0,
-//     this.shotsOnTargetA = 0,
-//     this.shotsOnTargetB = 0,
-//     this.cornersA = 0,
-//     this.cornersB = 0,
-//     this.foulsA = 0,
-//     this.foulsB = 0,
-//     this.yellowCardsA = 0,
-//     this.yellowCardsB = 0,
-//     this.redCardsA = 0,
-//     this.redCardsB = 0,
-//   });
-//
-//   factory MatchStats.fromMap(Map<String, dynamic> map) {
-//     return MatchStats(
-//       possessionA: (map['possessionA'] ?? 50).toInt(),
-//       possessionB: (map['possessionB'] ?? 50).toInt(),
-//       shotsA: (map['shotsA'] ?? 0).toInt(),
-//       shotsB: (map['shotsB'] ?? 0).toInt(),
-//       shotsOnTargetA: (map['shotsOnTargetA'] ?? 0).toInt(),
-//       shotsOnTargetB: (map['shotsOnTargetB'] ?? 0).toInt(),
-//       cornersA: (map['cornersA'] ?? 0).toInt(),
-//       cornersB: (map['cornersB'] ?? 0).toInt(),
-//       foulsA: (map['foulsA'] ?? 0).toInt(),
-//       foulsB: (map['foulsB'] ?? 0).toInt(),
-//       yellowCardsA: (map['yellowCardsA'] ?? 0).toInt(),
-//       yellowCardsB: (map['yellowCardsB'] ?? 0).toInt(),
-//       redCardsA: (map['redCardsA'] ?? 0).toInt(),
-//       redCardsB: (map['redCardsB'] ?? 0).toInt(),
-//     );
-//   }
-//
-//   Map<String, dynamic> toMap() {
-//     return {
-//       'possessionA': possessionA,
-//       'possessionB': possessionB,
-//       'shotsA': shotsA,
-//       'shotsB': shotsB,
-//       'shotsOnTargetA': shotsOnTargetA,
-//       'shotsOnTargetB': shotsOnTargetB,
-//       'cornersA': cornersA,
-//       'cornersB': cornersB,
-//       'foulsA': foulsA,
-//       'foulsB': foulsB,
-//       'yellowCardsA': yellowCardsA,
-//       'yellowCardsB': yellowCardsB,
-//       'redCardsA': redCardsA,
-//       'redCardsB': redCardsB,
-//     };
-//   }
-// }
-//
-// // LineUp Model
-// class LineUp {
-//   final String formation; // e.g., "4-4-2"
-//   final List<PlayerLineUp> players;
-//
-//   LineUp({
-//     required this.formation,
-//     required this.players,
-//   });
-//
-//   factory LineUp.fromMap(Map<String, dynamic> map) {
-//     return LineUp(
-//       formation: map['formation'] ?? '4-4-2',
-//       players: (map['players'] as List<dynamic>?)
-//           ?.map((e) => PlayerLineUp.fromMap(e as Map<String, dynamic>))
-//           .toList() ?? [],
-//     );
-//   }
-//
-//   Map<String, dynamic> toMap() {
-//     return {
-//       'formation': formation,
-//       'players': players.map((e) => e.toMap()).toList(),
-//     };
-//   }
-// }
-//
-// // Player LineUp Model
-// class PlayerLineUp {
-//   final String playerName;
-//   final String playerId;
-//   final int jerseyNumber;
-//   final String position; // GK, DEF, MID, FWD
-//   final bool isCaptain;
-//   final bool isSubstitute;
-//
-//   PlayerLineUp({
-//     required this.playerName,
-//     required this.playerId,
-//     required this.jerseyNumber,
-//     required this.position,
-//     this.isCaptain = false,
-//     this.isSubstitute = false,
-//   });
-//
-//   factory PlayerLineUp.fromMap(Map<String, dynamic> map) {
-//     return PlayerLineUp(
-//       playerName: map['playerName'] ?? '',
-//       playerId: map['playerId'] ?? '',
-//       jerseyNumber: map['jerseyNumber'] ?? 0,
-//       position: map['position'] ?? 'MID',
-//       isCaptain: map['isCaptain'] ?? false,
-//       isSubstitute: map['isSubstitute'] ?? false,
-//     );
-//   }
-//
-//   Map<String, dynamic> toMap() {
-//     return {
-//       'playerName': playerName,
-//       'playerId': playerId,
-//       'jerseyNumber': jerseyNumber,
-//       'position': position,
-//       'isCaptain': isCaptain,
-//       'isSubstitute': isSubstitute,
-//     };
-//   }
-// }
-//
-// // Head to Head Model
-// class HeadToHead {
-//   final int totalMatches;
-//   final int teamAWins;
-//   final int teamBWins;
-//   final int draws;
-//   final int teamAGoals;
-//   final int teamBGoals;
-//
-//   HeadToHead({
-//     this.totalMatches = 0,
-//     this.teamAWins = 0,
-//     this.teamBWins = 0,
-//     this.draws = 0,
-//     this.teamAGoals = 0,
-//     this.teamBGoals = 0,
-//   });
-//
-//   factory HeadToHead.fromMap(Map<String, dynamic> map) {
-//     return HeadToHead(
-//       totalMatches: map['totalMatches'] ?? 0,
-//       teamAWins: map['teamAWins'] ?? 0,
-//       teamBWins: map['teamBWins'] ?? 0,
-//       draws: map['draws'] ?? 0,
-//       teamAGoals: map['teamAGoals'] ?? 0,
-//       teamBGoals: map['teamBGoals'] ?? 0,
-//     );
-//   }
-//
-//   Map<String, dynamic> toMap() {
-//     return {
-//       'totalMatches': totalMatches,
-//       'teamAWins': teamAWins,
-//       'teamBWins': teamBWins,
-//       'draws': draws,
-//       'teamAGoals': teamAGoals,
-//       'teamBGoals': teamBGoals,
-//     };
-//   }
-// }
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MatchModel {
   final String id;
+  // এগুলি মূলত ডিসপ্লে নাম হিসেবে ব্যবহৃত হবে
   final String teamA;
   final String teamB;
+  // এগুলি রেফারেন্স আইডি (যেমন: dhamrai) হিসেবে ব্যবহৃত হবে
+  final String teamAId;
+  final String teamBId;
+  final String? teamALogo;
+  final String? teamBLogo;
   final int scoreA;
   final int scoreB;
   final DateTime date;
   final DateTime time;
-  final String status; // live, upcoming, finished
-  final String? tournament;
-  final String? tournamentId;
+  final String status;
   final String? venue;
+  final String adminFullName;
+  final DateTime createdAt;
   final List<MatchEvent> timeline;
   final MatchStats? stats;
   final LineUp? lineUpA;
   final LineUp? lineUpB;
+  final String? tournament;
+  final String? tournamentId;
   final HeadToHead? h2h;
 
   MatchModel({
     required this.id,
     required this.teamA,
     required this.teamB,
+    required this.teamAId,
+    required this.teamBId,
+    this.teamALogo,
+    this.teamBLogo,
     required this.scoreA,
     required this.scoreB,
     required this.date,
     required this.time,
     required this.status,
-    this.tournament,
-    this.tournamentId,
     this.venue,
+    required this.adminFullName,
+    required this.createdAt,
     this.timeline = const [],
     this.stats,
     this.lineUpA,
     this.lineUpB,
+    this.tournament,
+    this.tournamentId,
     this.h2h,
   });
 
-  // ✅ Null-Safe fromFirestore
+  // ✅ copyWith মেথড যোগ করা হয়েছে যা প্রোভাইডারের এররগুলো ফিক্স করবে
+  MatchModel copyWith({
+    String? status,
+    int? scoreA,
+    int? scoreB,
+    MatchStats? stats,
+    String? venue,
+    List<MatchEvent>? timeline,
+    LineUp? lineUpA,
+    LineUp? lineUpB,
+    HeadToHead? h2h,
+  }) {
+    return MatchModel(
+      id: id,
+      teamA: teamA,
+      teamB: teamB,
+      teamAId: teamAId,
+      teamBId: teamBId,
+      teamALogo: teamALogo,
+      teamBLogo: teamBLogo,
+      scoreA: scoreA ?? this.scoreA,
+      scoreB: scoreB ?? this.scoreB,
+      date: date,
+      time: time,
+      status: status ?? this.status,
+      venue: venue ?? this.venue,
+      adminFullName: adminFullName,
+      createdAt: createdAt,
+      timeline: timeline ?? this.timeline,
+      stats: stats ?? this.stats,
+      lineUpA: lineUpA ?? this.lineUpA,
+      lineUpB: lineUpB ?? this.lineUpB,
+      tournament: tournament,
+      tournamentId: tournamentId,
+      h2h: h2h ?? this.h2h,
+    );
+  }
+
   factory MatchModel.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
+    // টিম আইডি এবং নাম চেনার জন্য শক্তিশালী লজিক
+    // teamAId না থাকলে পুরাতন teamA ফিল্ড থেকে আইডি নেওয়ার চেষ্টা করবে
+    String tAId = data['teamAId'] ?? data['teamA'] ?? '';
+    String tBId = data['teamBId'] ?? data['teamB'] ?? '';
+
+    // teamAName না থাকলে teamA ফিল্ড থেকে নাম নেওয়ার চেষ্টা করবে
+    String tAName = data['teamAName'] ?? data['teamA'] ?? 'Team A';
+    String tBName = data['teamBName'] ?? data['teamB'] ?? 'Team B';
+
     return MatchModel(
       id: doc.id,
-      teamA: data['teamA'] ?? '',
-      teamB: data['teamB'] ?? '',
-      scoreA: data['scoreA'] ?? 0,
-      scoreB: data['scoreB'] ?? 0,
-
-      // ✅ Safe Timestamp parsing for date
-      date: data['date'] != null
-          ? (data['date'] as Timestamp).toDate()
-          : DateTime.now(),
-
-      // ✅ Safe Timestamp parsing for time
-      time: data['time'] != null
-          ? (data['time'] as Timestamp).toDate()
-          : DateTime.now(),
-
+      teamAId: tAId,
+      teamBId: tBId,
+      teamA: tAName,
+      teamB: tBName,
+      teamALogo: data['teamALogo'],
+      teamBLogo: data['teamBLogo'],
+      scoreA: (data['scoreA'] ?? 0).toInt(),
+      scoreB: (data['scoreB'] ?? 0).toInt(),
+      date: (data['date'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      time: (data['time'] as Timestamp?)?.toDate() ?? DateTime.now(),
       status: data['status'] ?? 'upcoming',
-      tournament: data['tournament'],
-      tournamentId: data['tournamentId'],
       venue: data['venue'],
-
-      // ✅ Safe timeline parsing
-      timeline: (data['timeline'] as List<dynamic>?)
-          ?.map((e) {
-        try {
-          return MatchEvent.fromMap(e as Map<String, dynamic>);
-        } catch (err) {
-          print('❌ Error parsing timeline event: $err');
-          return null;
-        }
-      })
-          .whereType<MatchEvent>()
-          .toList() ??
-          [],
-
-      stats: data['stats'] != null
-          ? MatchStats.fromMap(data['stats'] as Map<String, dynamic>)
-          : null,
+      adminFullName: data['adminFullName'] ?? '',
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      timeline: (data['timeline'] as List? ?? [])
+          .map((e) => MatchEvent.fromMap(Map<String, dynamic>.from(e)))
+          .toList(),
+      stats: data['stats'] != null ? MatchStats.fromMap(Map<String, dynamic>.from(data['stats'])) : null,
       lineUpA: data['lineUpA'] != null
-          ? LineUp.fromMap(data['lineUpA'] as Map<String, dynamic>)
+          ? LineUp.fromMap(Map<String, dynamic>.from(data['lineUpA']))
           : null,
       lineUpB: data['lineUpB'] != null
-          ? LineUp.fromMap(data['lineUpB'] as Map<String, dynamic>)
+          ? LineUp.fromMap(Map<String, dynamic>.from(data['lineUpB']))
           : null,
-      h2h: data['h2h'] != null
-          ? HeadToHead.fromMap(data['h2h'] as Map<String, dynamic>)
-          : null,
+      tournament: data['tournament'],
+      tournamentId: data['tournamentId'],
+      h2h: data['h2h'] != null ? HeadToHead.fromMap(Map<String, dynamic>.from(data['h2h'])) : null,
     );
   }
 
   Map<String, dynamic> toFirestore() {
     return {
-      'teamA': teamA,
-      'teamB': teamB,
+      'teamA': teamA, // Display Name
+      'teamB': teamB, // Display Name
+      'teamAId': teamAId, // Reference ID (dhamrai)
+      'teamBId': teamBId, // Reference ID
+      'teamAName': teamA, // Compatibility for older versions
+      'teamBName': teamB,
+      'teamALogo': teamALogo,
+      'teamBLogo': teamBLogo,
       'scoreA': scoreA,
       'scoreB': scoreB,
       'date': Timestamp.fromDate(date),
       'time': Timestamp.fromDate(time),
       'status': status,
-      'tournament': tournament,
-      'tournamentId': tournamentId,
       'venue': venue,
+      'adminFullName': adminFullName,
+      'createdAt': Timestamp.fromDate(createdAt),
       'timeline': timeline.map((e) => e.toMap()).toList(),
       'stats': stats?.toMap(),
       'lineUpA': lineUpA?.toMap(),
       'lineUpB': lineUpB?.toMap(),
+      'tournament': tournament,
+      'tournamentId': tournamentId,
       'h2h': h2h?.toMap(),
     };
   }
+
 }
 
-// Timeline Event Model
-class MatchEvent {
-  final String type; // goal, card, substitution
-  final String team; // teamA or teamB
-  final String playerName;
-  final String playerId;
-  final int minute;
-  final String? details; // yellow_card, red_card, player_out, player_in
-  final String? assistPlayerId;
-
-  MatchEvent({
-    required this.type,
-    required this.team,
-    required this.playerName,
-    required this.playerId,
-    required this.minute,
-    this.details,
-    this.assistPlayerId,
-  });
-
-  factory MatchEvent.fromMap(Map<String, dynamic> map) {
-    return MatchEvent(
-      type: map['type'] ?? '',
-      team: map['team'] ?? '',
-      playerName: map['playerName'] ?? '',
-      playerId: map['playerId'] ?? '',
-      minute: map['minute'] ?? 0,
-      details: map['details'],
-      assistPlayerId: map['assistPlayerId'],
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'type': type,
-      'team': team,
-      'playerName': playerName,
-      'playerId': playerId,
-      'minute': minute,
-      'details': details,
-      'assistPlayerId': assistPlayerId,
-    };
-  }
-}
-
-// Match Statistics Model
 class MatchStats {
-  final int possessionA;
-  final int possessionB;
-  final int shotsA;
-  final int shotsB;
-  final int shotsOnTargetA;
-  final int shotsOnTargetB;
-  final int cornersA;
-  final int cornersB;
-  final int foulsA;
-  final int foulsB;
-  final int yellowCardsA;
-  final int yellowCardsB;
-  final int redCardsA;
-  final int redCardsB;
+  final int shotsA,
+      shotsB,
+      shotsOnTargetA,
+      shotsOnTargetB,
+      cornersA,
+      cornersB,
+      foulsA,
+      foulsB,
+      yellowCardsA,
+      yellowCardsB,
+      redCardsA,
+      redCardsB,
+      possessionA,
+      possessionB; // ✅ possession যোগ করুন
 
   MatchStats({
-    this.possessionA = 50,
-    this.possessionB = 50,
     this.shotsA = 0,
     this.shotsB = 0,
     this.shotsOnTargetA = 0,
@@ -512,117 +193,209 @@ class MatchStats {
     this.yellowCardsB = 0,
     this.redCardsA = 0,
     this.redCardsB = 0,
+    this.possessionA = 50, // ✅ ডিফল্ট ভ্যালু দিন
+    this.possessionB = 50, // ✅ ডিফল্ট ভ্যালু দিন
   });
 
-  factory MatchStats.fromMap(Map<String, dynamic> map) {
-    return MatchStats(
-      possessionA: (map['possessionA'] ?? 50).toInt(),
-      possessionB: (map['possessionB'] ?? 50).toInt(),
-      shotsA: (map['shotsA'] ?? 0).toInt(),
-      shotsB: (map['shotsB'] ?? 0).toInt(),
-      shotsOnTargetA: (map['shotsOnTargetA'] ?? 0).toInt(),
-      shotsOnTargetB: (map['shotsOnTargetB'] ?? 0).toInt(),
-      cornersA: (map['cornersA'] ?? 0).toInt(),
-      cornersB: (map['cornersB'] ?? 0).toInt(),
-      foulsA: (map['foulsA'] ?? 0).toInt(),
-      foulsB: (map['foulsB'] ?? 0).toInt(),
-      yellowCardsA: (map['yellowCardsA'] ?? 0).toInt(),
-      yellowCardsB: (map['yellowCardsB'] ?? 0).toInt(),
-      redCardsA: (map['redCardsA'] ?? 0).toInt(),
-      redCardsB: (map['redCardsB'] ?? 0).toInt(),
-    );
-  }
+  factory MatchStats.fromMap(Map<String, dynamic> map) => MatchStats(
+    shotsA: map['shotsA'] ?? 0, shotsB: map['shotsB'] ?? 0,
+    shotsOnTargetA: map['shotsOnTargetA'] ?? 0,
+    shotsOnTargetB: map['shotsOnTargetB'] ?? 0,
+    cornersA: map['cornersA'] ?? 0, cornersB: map['cornersB'] ?? 0,
+    foulsA: map['foulsA'] ?? 0, foulsB: map['foulsB'] ?? 0,
+    yellowCardsA: map['yellowCardsA'] ?? 0,
+    yellowCardsB: map['yellowCardsB'] ?? 0,
+    redCardsA: map['redCardsA'] ?? 0, redCardsB: map['redCardsB'] ?? 0,
+    possessionA: map['possessionA'] ?? 50, // ✅ ম্যাপ থেকে লোড করুন
+    possessionB: map['possessionB'] ?? 50,
+  );
 
-  Map<String, dynamic> toMap() {
-    return {
-      'possessionA': possessionA,
-      'possessionB': possessionB,
-      'shotsA': shotsA,
-      'shotsB': shotsB,
-      'shotsOnTargetA': shotsOnTargetA,
-      'shotsOnTargetB': shotsOnTargetB,
-      'cornersA': cornersA,
-      'cornersB': cornersB,
-      'foulsA': foulsA,
-      'foulsB': foulsB,
-      'yellowCardsA': yellowCardsA,
-      'yellowCardsB': yellowCardsB,
-      'redCardsA': redCardsA,
-      'redCardsB': redCardsB,
-    };
+  Map<String, dynamic> toMap() => {
+    'shotsA': shotsA,
+    'shotsB': shotsB,
+    'shotsOnTargetA': shotsOnTargetA,
+    'shotsOnTargetB': shotsOnTargetB,
+    'cornersA': cornersA,
+    'cornersB': cornersB,
+    'foulsA': foulsA,
+    'foulsB': foulsB,
+    'yellowCardsA': yellowCardsA,
+    'yellowCardsB': yellowCardsB,
+    'redCardsA': redCardsA,
+    'redCardsB': redCardsB,
+    'possessionA': possessionA,
+    'possessionB': possessionB,
+  };
+
+  MatchStats copyWith({
+    int? shotsA,
+    int? shotsB,
+    int? shotsOnTargetA,
+    int? shotsOnTargetB,
+    int? cornersA,
+    int? cornersB,
+    int? foulsA,
+    int? foulsB,
+    int? yellowCardsA,
+    int? yellowCardsB,
+    int? redCardsA,
+    int? redCardsB,
+    int? possessionA,
+    int? possessionB, // ✅ copyWith এ যোগ করুন
+  }) {
+    return MatchStats(
+      shotsA: shotsA ?? this.shotsA, shotsB: shotsB ?? this.shotsB,
+      shotsOnTargetA: shotsOnTargetA ?? this.shotsOnTargetA,
+      shotsOnTargetB: shotsOnTargetB ?? this.shotsOnTargetB,
+      cornersA: cornersA ?? this.cornersA, cornersB: cornersB ?? this.cornersB,
+      foulsA: foulsA ?? this.foulsA, foulsB: foulsB ?? this.foulsB,
+      yellowCardsA: yellowCardsA ?? this.yellowCardsA,
+      yellowCardsB: yellowCardsB ?? this.yellowCardsB,
+      redCardsA: redCardsA ?? this.redCardsA,
+      redCardsB: redCardsB ?? this.redCardsB,
+      possessionA: possessionA ?? this.possessionA, // ✅ আপডেট করুন
+      possessionB: possessionB ?? this.possessionB,
+    );
   }
 }
 
-// LineUp Model
+// LineUp, PlayerLineUp, এবং MatchEvent ক্লাসগুলো আপনার আগের কোড অনুযায়ী ঠিক আছে...
 class LineUp {
-  final String formation; // e.g., "4-4-2"
+  final String formation;
   final List<PlayerLineUp> players;
 
-  LineUp({
-    required this.formation,
-    required this.players,
-  });
+  LineUp({required this.formation, required this.players});
 
   factory LineUp.fromMap(Map<String, dynamic> map) {
+    var rawPlayers = map['players'];
+    List<PlayerLineUp> playerList = [];
+
+    if (rawPlayers != null) {
+      if (rawPlayers is List) {
+        playerList = rawPlayers
+            .map((e) => PlayerLineUp.fromMap(Map<String, dynamic>.from(e)))
+            .toList();
+      } else if (rawPlayers is Map) {
+        // ...
+      }
+    }
+
     return LineUp(
-      formation: map['formation'] ?? '4-4-2',
-      players: (map['players'] as List<dynamic>?)
-          ?.map((e) => PlayerLineUp.fromMap(e as Map<String, dynamic>))
-          .toList() ??
-          [],
+      formation: map['formation'] ?? '4-3-3',
+      players: playerList,
     );
   }
 
-  Map<String, dynamic> toMap() {
-    return {
-      'formation': formation,
-      'players': players.map((e) => e.toMap()).toList(),
-    };
-  }
+  Map<String, dynamic> toMap() => {
+    'formation': formation,
+    'players': players.map((e) => e.toMap()).toList(),
+  };
 }
 
-// Player LineUp Model
 class PlayerLineUp {
-  final String playerName;
   final String playerId;
+  final String playerName;
+  final String position;
   final int jerseyNumber;
-  final String position; // GK, DEF, MID, FWD
-  final bool isCaptain;
   final bool isSubstitute;
+  final bool isCaptain;
+  final String? profilePhotoUrl;
 
   PlayerLineUp({
-    required this.playerName,
     required this.playerId,
-    required this.jerseyNumber,
+    required this.playerName,
     required this.position,
-    this.isCaptain = false,
+    required this.jerseyNumber,
     this.isSubstitute = false,
+    this.isCaptain = false,
+    this.profilePhotoUrl,
   });
 
-  factory PlayerLineUp.fromMap(Map<String, dynamic> map) {
+  // ✅ এই মেথডটি অবশ্যই যোগ করতে হবে
+  PlayerLineUp copyWith({
+    String? playerId,
+    String? playerName,
+    String? position,
+    int? jerseyNumber,
+    bool? isSubstitute,
+    bool? isCaptain,
+    String? profilePhotoUrl
+  }) {
     return PlayerLineUp(
-      playerName: map['playerName'] ?? '',
-      playerId: map['playerId'] ?? '',
-      jerseyNumber: map['jerseyNumber'] ?? 0,
-      position: map['position'] ?? 'MID',
-      isCaptain: map['isCaptain'] ?? false,
-      isSubstitute: map['isSubstitute'] ?? false,
+      playerId: playerId ?? this.playerId,
+      playerName: playerName ?? this.playerName,
+      position: position ?? this.position,
+      jerseyNumber: jerseyNumber ?? this.jerseyNumber,
+      isSubstitute: isSubstitute ?? this.isSubstitute,
+      isCaptain: isCaptain ?? this.isCaptain,
+        profilePhotoUrl:profilePhotoUrl??this.profilePhotoUrl
     );
   }
 
-  Map<String, dynamic> toMap() {
-    return {
-      'playerName': playerName,
-      'playerId': playerId,
-      'jerseyNumber': jerseyNumber,
-      'position': position,
-      'isCaptain': isCaptain,
-      'isSubstitute': isSubstitute,
-    };
-  }
+  factory PlayerLineUp.fromMap(Map<String, dynamic> map) => PlayerLineUp(
+    playerName: map['playerName'] ?? '',
+    playerId: map['playerId'] ?? '',
+    jerseyNumber: map['jerseyNumber'] ?? 0,
+    position: map['position'] ?? '',
+    isCaptain: map['isCaptain'] ?? false,
+    isSubstitute: map['isSubstitute'] ?? false,
+    profilePhotoUrl: map['profilePhotoUrl'],
+  );
+  Map<String, dynamic> toMap() => {
+    'playerName': playerName,
+    'playerId': playerId,
+    'jerseyNumber': jerseyNumber,
+    'position': position,
+    'isCaptain': isCaptain,
+    'isSubstitute': isSubstitute,
+    'profilePhotoUrl': profilePhotoUrl,
+  };
 }
 
-// Head to Head Model
+class MatchEvent {
+  final String type, team, playerName, playerId;
+  final int minute;
+  final String? details;
+  final String? assistPlayerName;
+  final String? assistPlayerId; // ✅ এটি যোগ করুন
+  final String? assistType; // ✅ এটি যোগ করুন
+
+  MatchEvent({
+    required this.type,
+    required this.team,
+    required this.playerName,
+    required this.playerId,
+    required this.minute,
+    this.details,
+    this.assistPlayerName,
+    this.assistPlayerId, // ✅ কনস্ট্রাক্টরে যোগ করুন
+    this.assistType, // ✅ কনস্ট্রাক্টরে যোগ করুন
+  });
+
+  factory MatchEvent.fromMap(Map<String, dynamic> map) => MatchEvent(
+    type: map['type'] ?? '',
+    team: map['team'] ?? '',
+    playerName: map['playerName'] ?? '',
+    playerId: map['playerId'] ?? '',
+    minute: map['minute'] ?? 0,
+    details: map['details'],
+    assistPlayerName: map['assistPlayerName'],
+    assistPlayerId: map['assistPlayerId'], // ✅ ম্যাপ থেকে লোড করুন
+    assistType: map['assistType'], // ✅ ম্যাপ থেকে লোড করুন
+  );
+
+  Map<String, dynamic> toMap() => {
+    'type': type,
+    'team': team,
+    'playerName': playerName,
+    'playerId': playerId,
+    'minute': minute,
+    'details': details,
+    'assistPlayerName': assistPlayerName,
+    'assistPlayerId': assistPlayerId, // ✅ ম্যাপে সেভ করুন
+    'assistType': assistType, // ✅ ম্যাপে সেভ করুন
+  };
+}
 class HeadToHead {
   final int totalMatches;
   final int teamAWins;
